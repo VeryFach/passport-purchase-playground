@@ -40,26 +40,27 @@ const record = (type: HistoryRecord["type"], level: 1 | 2 | 3): HistoryRecord =>
   original: true,
 });
 describe("Trust Score", () => {
-  it("gives 20 identity and 10 clean lock points", () => expect(trustScore(device)).toBe(30));
+  it("gives 20 identity points and no points for self-reported lock status", () =>
+    expect(trustScore(device)).toBe(20));
   it("L1 claims add no history points", () =>
     expect(
       trustScore({
         ...device,
         records: [record("pembelian", 1), record("baterai", 1), record("servis", 1)],
       }),
-    ).toBe(30));
+    ).toBe(20));
   it("purchase proof adds 15", () =>
-    expect(trustScore({ ...device, records: [record("pembelian", 2)] })).toBe(45));
+    expect(trustScore({ ...device, records: [record("pembelian", 2)] })).toBe(35));
   it("battery evidence adds 15", () =>
-    expect(trustScore({ ...device, records: [record("baterai", 2)] })).toBe(45));
-  it("service evidence adds 5 each and caps at 20", () =>
+    expect(trustScore({ ...device, records: [record("baterai", 2)] })).toBe(35));
+  it("documented history adds a flat 15 regardless of repeated events", () =>
     expect(
       trustScore({ ...device, records: Array.from({ length: 5 }, () => record("servis", 2)) }),
-    ).toBe(50));
-  it("partner verification adds 10 each and caps at 20", () =>
+    ).toBe(35));
+  it("partner verification adds 7 each and caps at 35", () =>
     expect(
-      trustScore({ ...device, records: Array.from({ length: 3 }, () => record("kerusakan", 3)) }),
-    ).toBe(50));
+      trustScore({ ...device, records: Array.from({ length: 6 }, () => record("kerusakan", 3)) }),
+    ).toBe(20 + 15 + 35));
   it("badges switch at 40 and 70", () => {
     expect([39, 40, 69, 70, 100].map(scoreLabel)).toEqual([
       "Dasar",
@@ -71,12 +72,12 @@ describe("Trust Score", () => {
   });
 });
 describe("Indicative prices", () => {
-  it("uses 6% premium for trusted passports and 7% range", () => {
+  it("uses 3% premium for documented passports and 7% range", () => {
     const e = estimate({ ...device, records: [record("pembelian", 3), record("baterai", 3)] });
-    expect(e?.mid).toBe(6105600);
-    expect(e?.added).toBe(345600);
-    expect(e?.min).toBe(5678208);
-    expect(e?.max).toBe(6532992);
+    expect(e?.mid).toBe(5932800);
+    expect(e?.added).toBe(172800);
+    expect(e?.min).toBe(5517504);
+    expect(e?.max).toBe(6348096);
   });
   it("battery thresholds are 90 and 80", () => {
     expect(

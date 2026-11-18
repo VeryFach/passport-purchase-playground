@@ -284,7 +284,7 @@ export function RecordDialog({
 }
 
 export function PassportForm({ id }: { id?: string }) {
-  const { devices, user, addDevice, updateDevice } = useDemo();
+  const { devices, user, saveDevice, requestVerification } = useDemo();
   const existing = devices.find((d) => d.id === id);
   const navigate = useNavigate();
 
@@ -381,7 +381,7 @@ export function PassportForm({ id }: { id?: string }) {
   };
 
   const save = form.handleSubmit(
-    (v) => {
+    async (v) => {
       if (duplicatePassport(devices, v.serial, existing?.id)) {
         form.setError("serial", {
           message: "Serial / IMEI ini sudah terdaftar di paspor lain.",
@@ -397,19 +397,15 @@ export function PassportForm({ id }: { id?: string }) {
         ...preview,
         ...v,
         id: existing?.id || crypto.randomUUID(),
-        basePrice:
-          v.model === "iPhone 13"
-            ? 6000000
-            : v.model === "Galaxy S23"
-              ? 6200000
-              : v.model === "MacBook Air M1"
-                ? 8500000
-                : null,
+        basePrice: existing?.basePrice ?? null,
       };
-      if (existing) updateDevice(existing.id, () => device);
-      else addDevice(device);
+      const saved = await saveDevice(device, existing?.id);
+      if (!saved) {
+        toast.error("Paspor gagal disimpan. Periksa koneksi dan coba lagi.");
+        return;
+      }
       toast.success("Paspor berhasil disimpan");
-      navigate({ to: "/devices/$id", params: () => ({ id: device.id }) });
+      navigate({ to: "/devices/$id", params: { id: saved.id } });
     },
     () => {
       if (!existing) setStep(1);
@@ -740,6 +736,17 @@ export function PassportForm({ id }: { id?: string }) {
                         <p className="mt-1.5 text-xs leading-relaxed text-foreground/90">
                           {r.description}
                         </p>
+                        {r.level === 2 && (
+                          <button
+                            type="button"
+                            className="mt-2 block text-xs font-medium text-brand underline-offset-4 hover:underline"
+                            onClick={() => {
+                              void requestVerification(r.id);
+                            }}
+                          >
+                            Ajukan verifikasi mitra
+                          </button>
+                        )}
                         {r.level >= 3 && (
                           <button
                             type="button"
@@ -882,6 +889,7 @@ export function PassportForm({ id }: { id?: string }) {
                 </Button>
               )}
             </div>
+
           </div>
         </form>
 

@@ -64,7 +64,9 @@
 | **Pengguna (user)** | Individu perorangan yang bisa mendaftarkan perangkatnya, mencatat riwayat, menjual (membuat listing), sekaligus mencari dan membeli perangkat dari pengguna lain. |
 | **Mitra Servis** | Mitra Servis (mitra): Teknisi/tempat servis yang memverifikasi catatan perbaikan agar naik ke level L3. |
 
-*(Pengguna dapat memiliki peran pemilik dan pembeli sekaligus. Peran Mitra cukup dibedakan lewat satu field `role` di profil.)*
+**Alur menjual:** buat paspor perangkat → lengkapi informasi dan riwayat → pilih **Jual perangkat** di Perangkat Saya → isi harga dan detail listing → tayangkan. Tidak ada langkah pendaftaran penjual atau toko.
+
+**Model C2C:** hanya ada dua peran akun, yaitu `user` dan `mitra`. Pembeli dan penjual adalah aktivitas kontekstual, bukan peran akun. Tidak ada pendaftaran penjual, pendaftaran toko/merchant, aplikasi seller, manajemen toko, atau pergantian mode pembeli/penjual. Setiap `user` dapat membeli dan menjual dengan akun yang sama; otorisasi menjual ditentukan oleh kepemilikan perangkat. Akun `mitra` dibatasi untuk alur verifikasi dan tidak dapat membeli atau menjual.
 
 ---
 
@@ -184,15 +186,18 @@ Usia di antara titik data dihitung dengan interpolasi sederhana.
 
 ---
 
-## 6. Model Data (5 tabel)
+## 6. Model Data (6 tabel)
 
 | Tabel | Kolom utama |
 |---|---|
-| **profiles** | id, nama, role (`user` / `mitra`) |
+| **profiles** | id, nama, role (`user` / `mitra`, default `user`) |
 | **devices** | id, owner_id, jenis, merek, model, serial_imei, tahun_beli, harga_beli, foto_url, kunci_bersih (bool), battery_health (%), kondisi_fisik (`mulus` / `lecet` / `rusak`), trust_score |
 | **history_records** | id, device_id, tipe, tanggal, deskripsi, bukti_url, level (1/2/3), part_original (bool, untuk catatan ganti part), verified_by, created_at |
 | **listings** | id, device_id, seller_id, harga, estimasi_min, estimasi_max, nilai_tambah_paspor, alasan_ai (JSON), label_harga, status (`aktif` / `terjual`), buyer_id, created_at |
+| **transactions** | id, listing_id, buyer_id, seller_id, total_price, listing_snapshot, status, is_simulation, created_at |
 | **market_prices** | id, jenis, merek, model, varian, harga_baru, harga_bekas_1th, harga_bekas_2th, harga_bekas_3th, catatan_sumber, updated_at |
+
+`buyer_id` dan `seller_id` adalah kolom konteks transaksi/listing, bukan peran akun. Tidak ada tabel toko, merchant, penjual, atau pembeli tambahan.
 
 **Catatan:** riwayat kepemilikan cukup dicatat lewat `listings` (seller dan buyer). Foto disimpan di storage. Trust Score dihitung ulang tiap catatan berubah (fungsi di server atau trigger database). Estimasi harga dihitung di server (API route) supaya kunci API AI tidak terekspos di browser, dan hasilnya disimpan di `listings` agar tidak dihitung ulang setiap halaman dibuka.
 

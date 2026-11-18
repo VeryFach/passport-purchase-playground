@@ -85,10 +85,11 @@ describe("Demo escrow transitions", () => {
         .status,
     ).toBe("sengketa");
   });
-  it("only admin can release or refund disputed funds", () => {
+  it("buyer refunds and seller releases disputed funds without an admin", () => {
     const disputed = { ...order, status: "sengketa" as const };
-    expect(advanceOrder(disputed, "seller", "release")).toBe(disputed);
-    expect(advanceOrder(disputed, "admin", "refund").status).toBe("dikembalikan");
-    expect(advanceOrder(disputed, "admin", "release").status).toBe("selesai");
+    expect(advanceOrder(disputed, "buyer", "release")).toBe(disputed);
+    expect(advanceOrder(disputed, "seller", "refund")).toBe(disputed);
+    expect(advanceOrder(disputed, "buyer", "refund").status).toBe("dikembalikan");
+    expect(advanceOrder(disputed, "seller", "release").status).toBe("selesai");
   });
 });

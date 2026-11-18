@@ -88,14 +88,18 @@ export function advanceOrder(
     details.evidence
   )
     return { ...order, status: "sengketa", reason: details.reason, evidence: details.evidence };
-  if (actor === "admin" && order.status === "sengketa" && action === "refund")
+  if (actor === order.buyer && order.status === "sengketa" && action === "refund")
     return {
       ...order,
       status: "dikembalikan",
-      decision: "Pengembalian dana disetujui (simulasi).",
+      decision: "Pembeli membatalkan; dana demo dikembalikan (simulasi).",
     };
-  if (actor === "admin" && order.status === "sengketa" && action === "release")
-    return { ...order, status: "selesai", decision: "Dana dilepas ke penjual (simulasi)." };
+  if (actor === order.seller && order.status === "sengketa" && action === "release")
+    return {
+      ...order,
+      status: "selesai",
+      decision: "Penjual menyelesaikan; dana demo dilepas (simulasi).",
+    };
   return order;
 }
 export const orderLabels: Record<OrderStatus, string> = {

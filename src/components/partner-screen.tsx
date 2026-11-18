@@ -1,24 +1,25 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useDemo } from "./demo-provider";
 import { EmptyState, LevelChip, PageHeading } from "./passport-ui";
-import { dateLabel, maskedSerial, recordNames, trustScore } from "@/lib/passport";
+import { dateLabel, maskedSerial } from "@/lib/passport";
 import { cn } from "@/lib/utils";
+
 export function PartnerScreen() {
-  const { devices, user, updateDevice, inspections } = useDemo();
+  const { user, pendingVerifications, reviewVerification, inspections, devices } = useDemo();
   const [selected, setSelected] = useState(""),
     [confirm, setConfirm] = useState(false),
-    [zoom, setZoom] = useState(false);
-  const queue = devices.flatMap((d) =>
-    d.records.filter((r) => r.level === 2).map((r) => ({ d, r })),
-  );
-  const current = queue.find((item) => item.r.id === selected) || queue[0];
-  const [identityConfirmed, setIdentityConfirmed] = useState(false);
-  if (user?.role !== "partner")
+    [rejectOpen, setRejectOpen] = useState(false),
+    [note, setNote] = useState(""),
+    [zoom, setZoom] = useState(false),
+    [identityConfirmed, setIdentityConfirmed] = useState(false);
+  const queue = pendingVerifications;
+  const current = queue.find((item) => item.recordId === selected) || queue[0];
+
+  if (user?.role !== "mitra")
     return (
       <main className="page-container py-12">
         <EmptyState title="Masuk sebagai Mitra untuk memverifikasi catatan.">
@@ -30,22 +31,23 @@ export function PartnerScreen() {
         </EmptyState>
       </main>
     );
-  const verify = () => {
-    if (!current || !identityConfirmed || !current.d.unlocked) return;
-    const before = trustScore(current.d);
-    const updated = {
-      ...current.d,
-      identityStatus: "checked" as const,
-      records: current.d.records.map((r) =>
-        r.id === current.r.id ? { ...r, level: 4 as const, verifiedBy: user.name } : r,
-      ),
-    };
-    updateDevice(current.d.id, () => updated);
-    toast.success(`Catatan terverifikasi · Skor ${before} → ${trustScore(updated)}`);
+
+  const approve = () => {
+    if (!current || !identityConfirmed) return;
+    void reviewVerification(current.recordId, true);
     setConfirm(false);
     setSelected("");
     setIdentityConfirmed(false);
   };
+  const reject = () => {
+    if (!current || note.trim().length < 5) return;
+    void reviewVerification(current.recordId, false, note.trim());
+    setRejectOpen(false);
+    setNote("");
+    setSelected("");
+    setIdentityConfirmed(false);
+  };
+
   return (
     <main className="page-container reading-screen py-8">
       <PageHeading
@@ -61,7 +63,8 @@ export function PartnerScreen() {
           <h2 className="font-semibold">Jadwal inspeksi demo</h2>
           {inspections.map((i) => (
             <p key={i.id} className="mt-3 text-sm">
-              {devices.find((d) => d.id === i.deviceId)?.model} · {dateLabel(i.date)} · {i.location}
+              {devices.find((d) => d.id === i.deviceId)?.model || i.deviceId} ·{" "}
+              {dateLabel(i.date)} · {i.location}
             </p>
           ))}
         </section>
@@ -73,30 +76,32 @@ export function PartnerScreen() {
               Menunggu verifikasi <span className="text-muted-foreground">({queue.length})</span>
             </h2>
             <div className="max-h-[620px] space-y-2 overflow-y-auto">
-              {queue.map(({ d, r }) => (
+              {queue.map((item) => (
                 <Button
-                  key={r.id}
+                  key={item.recordId}
                   variant="ghost"
                   onClick={() => {
-                    setSelected(r.id);
+                    setSelected(item.recordId);
                     setIdentityConfirmed(false);
                   }}
                   className={cn(
                     "h-auto w-full justify-start whitespace-normal p-4 text-left",
-                    current.r.id === r.id ? "bg-primary text-primary-foreground" : "bg-muted",
+                    current.recordId === item.recordId
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted",
                   )}
                 >
                   <div>
-                    <p className="text-sm font-medium">{recordNames[r.type]}</p>
+                    <p className="text-sm font-medium">{item.recordTitle}</p>
                     <p
                       className={cn(
                         "mt-1 text-xs",
-                        current.r.id === r.id
+                        current.recordId === item.recordId
                           ? "text-primary-foreground/75"
                           : "text-muted-foreground",
                       )}
                     >
-                      {d.model} · {dateLabel(r.date)}
+                      {item.deviceModel} · {dateLabel(item.date)}
                     </p>
                   </div>
                 </Button>
@@ -105,17 +110,17 @@ export function PartnerScreen() {
           </section>
           <section className="rounded-lg border border-border p-5 md:p-6">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="min-w-0 text-xl font-semibold">{recordNames[current.r.type]}</h2>
+              <h2 className="min-w-0 text-xl font-semibold">{current.recordTitle}</h2>
               <LevelChip level={2} />
             </div>
             <p className="text-sm text-muted-foreground">
-              {current.d.model} · {dateLabel(current.r.date)}
+              {current.deviceBrand} {current.deviceModel} · {dateLabel(current.date)}
             </p>
             <p className="mt-2 font-mono text-xs text-muted-foreground">
-              Serial {maskedSerial(current.d.serial)}
+              Serial {current.serial ? maskedSerial(current.serial) : "tidak ditampilkan"}
             </p>
-            <p className="my-5 text-sm leading-6">{current.r.description}</p>
-            {current.r.evidence && (
+            <p className="my-5 text-sm leading-6">{current.description}</p>
+            {current.evidence ? (
               <Button
                 variant="ghost"
                 className="mb-6 h-auto w-full bg-muted p-5"
@@ -123,11 +128,16 @@ export function PartnerScreen() {
                 onClick={() => setZoom(true)}
               >
                 <img
-                  src={current.r.evidence}
+                  src={current.evidence}
                   alt="Bukti untuk diperiksa mitra"
                   className="max-h-[420px] w-full object-contain"
                 />
               </Button>
+            ) : (
+              <p className="mb-6 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+                Bukti belum dapat diakses. Pastikan kebijakan penyimpanan migrasi 002 sudah
+                dijalankan.
+              </p>
             )}
             <label className="mb-5 flex items-start gap-3 text-sm leading-6">
               <input
@@ -136,20 +146,22 @@ export function PartnerScreen() {
                 onChange={(e) => setIdentityConfirmed(e.target.checked)}
                 className="mt-1 size-5"
               />
-              Identitas cocok dan kunci bersih pada pemeriksaan demo.
+              Saya telah memeriksa bukti dan identitas perangkat pada pemeriksaan demo.
             </label>
-            {!current.d.unlocked && (
-              <p className="mb-4 text-sm text-expensive">
-                Klaim kunci bersih belum tersedia. Pemilik perlu memperbaruinya.
-              </p>
-            )}
             <Button
-              disabled={!identityConfirmed || !current.d.unlocked}
+              disabled={!identityConfirmed}
               className="h-12 w-full"
               onClick={() => setConfirm(true)}
             >
               <ShieldCheck />
               Verifikasi catatan
+            </Button>
+            <Button
+              variant="outline"
+              className="mt-3 h-12 w-full"
+              onClick={() => setRejectOpen(true)}
+            >
+              Tolak dengan catatan
             </Button>
           </section>
         </div>
@@ -163,21 +175,45 @@ export function PartnerScreen() {
           <DialogTitle>Verifikasi catatan ini?</DialogTitle>
           <DialogDescription>
             Anda menyatakan telah memeriksa bukti yang dilampirkan. Catatan akan ditandai
-            Terinspeksi (simulasi).
+            Terverifikasi (L3, simulasi) dan Trust Score dihitung ulang.
           </DialogDescription>
-          <Button onClick={verify}>
+          <Button onClick={approve}>
             <ShieldCheck />
             Konfirmasi verifikasi
+          </Button>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <DialogContent>
+          <DialogTitle>Tolak verifikasi</DialogTitle>
+          <DialogDescription>
+            Alasan penolakan disimpan pada catatan. Catatan asli tidak diubah.
+          </DialogDescription>
+          <label className="field">
+            Catatan untuk pemilik
+            <textarea
+              rows={3}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Bukti kurang jelas, tanggal tidak sesuai, dan sebagainya."
+            />
+          </label>
+          <Button
+            className="h-12 w-full"
+            disabled={note.trim().length < 5}
+            onClick={reject}
+          >
+            Tolak verifikasi
           </Button>
         </DialogContent>
       </Dialog>
       <Dialog open={zoom} onOpenChange={setZoom}>
         <DialogContent>
           <DialogTitle>Bukti riwayat</DialogTitle>
-          <DialogDescription>Foto dokumen contoh.</DialogDescription>
-          {current?.r.evidence && (
+          <DialogDescription>Bukti privat diakses melalui tautan bertanda tangan.</DialogDescription>
+          {current?.evidence && (
             <img
-              src={current.r.evidence}
+              src={current.evidence}
               alt="Bukti riwayat diperbesar"
               className="max-h-[70vh] object-contain"
             />

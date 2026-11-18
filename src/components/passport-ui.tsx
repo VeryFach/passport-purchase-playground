@@ -48,37 +48,26 @@ export function AppHeader() {
   const { user, signOut } = useDemo();
   const path = useLocation().pathname;
   const mobileItems =
-    user?.role === "partner"
+    user?.role === "mitra"
       ? [
           { to: "/", label: "Beranda", asset: navHome },
           { to: "/mitra", label: "Mitra", asset: navDevices },
           { to: "/orders", label: "Aktivitas", asset: navActivity },
           { to: "/account", label: "Akun", asset: navAccount },
         ]
-      : user?.role === "admin"
-        ? [
-            { to: "/", label: "Beranda", asset: navHome },
-            { to: "/admin", label: "Tinjauan", asset: navDevices },
-            { to: "/orders", label: "Aktivitas", asset: navActivity },
-            { to: "/account", label: "Akun", asset: navAccount },
-          ]
-        : [
-            { to: "/", label: "Beranda", asset: navHome },
-            { to: "/devices", label: "Perangkat", asset: navDevices },
-            { to: "/orders", label: "Aktivitas", asset: navActivity },
-            { to: "/account", label: "Akun", asset: navAccount },
-          ];
+      : [
+          { to: "/", label: "Beranda", asset: navHome },
+          { to: "/devices", label: "Perangkat", asset: navDevices },
+          { to: "/orders", label: "Aktivitas", asset: navActivity },
+          { to: "/account", label: "Akun", asset: navAccount },
+        ];
   return (
     <>
       <header className="sticky top-0 z-30 bg-card lg:border-b lg:border-border">
         <div className="page-container grid h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:flex md:justify-between lg:h-[68px]">
           <Logo />
           <nav aria-label="Navigasi utama" className="hidden h-full items-center gap-8 lg:flex">
-            {user?.role === "admin" ? (
-              <Link to="/admin" className="text-sm font-semibold text-foreground">
-                Peninjauan
-              </Link>
-            ) : user?.role === "partner" ? (
+            {user?.role === "mitra" ? (
               <Link to="/mitra" className="text-sm font-semibold text-foreground">
                 Dasbor Mitra
               </Link>
