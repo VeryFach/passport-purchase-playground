@@ -27,6 +27,7 @@ import {
   historySchema,
   passportSchema,
   recordNames,
+  todayDateString,
   trustScore,
   type Device,
   type HistoryRecord,
@@ -234,7 +235,7 @@ export function RecordDialog({
             </label>
             <label className="field">
               Tanggal
-              <input type="date" max="2026-11-18" {...form.register("date")} />
+              <input type="date" max={todayDateString()} {...form.register("date")} />
               {form.formState.errors.date && (
                 <span className="field-error">{form.formState.errors.date.message}</span>
               )}

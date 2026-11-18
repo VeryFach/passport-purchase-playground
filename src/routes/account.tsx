@@ -7,13 +7,12 @@ import { useDemo } from "@/components/demo-provider";
 import { EmptyState, PageHeading, PassportCard } from "@/components/passport-ui";
 import { pageHead } from "@/lib/metadata";
 export const Route = createFileRoute("/account")({
-  head: () => pageHead("Akun Saya", "Kelola profil, alamat, dan perangkat tersimpan di akun demo."),
+  head: () => pageHead("Akun Saya", "Kelola profil dan perangkat tersimpan di akun demo."),
   component: Account,
 });
 function Account() {
   const { user, profile, setProfile, saved, devices, signOut } = useDemo();
-  const [phone, setPhone] = useState(profile.phone),
-    [address, setAddress] = useState(profile.address);
+  const [phone, setPhone] = useState(profile.phone);
   return (
     <main className="page-container reading-screen py-9">
       <PageHeading
@@ -27,18 +26,14 @@ function Account() {
               className="space-y-5"
               onSubmit={(e) => {
                 e.preventDefault();
-                setProfile({ phone, address });
+                setProfile({ phone });
                 toast.success("Profil demo disimpan");
               }}
             >
-              <h2 className="text-lg font-semibold">Kontak dan alamat</h2>
+              <h2 className="text-lg font-semibold">Informasi kontak</h2>
               <label className="field">
                 Nomor telepon
                 <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              </label>
-              <label className="field">
-                Alamat serah terima
-                <textarea rows={3} value={address} onChange={(e) => setAddress(e.target.value)} />
               </label>
               <Button type="submit" className="h-12">
                 Simpan profil
@@ -47,7 +42,7 @@ function Account() {
             <section>
               <h2 className="text-lg font-semibold">Privasi Anda</h2>
               <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                Nomor telepon dan alamat tidak muncul pada paspor publik. Serial perangkat
+                Nomor telepon tidak muncul pada paspor publik. Serial perangkat
                 disamarkan, tetapi riwayat teknis tetap terlihat.
               </p>
               <p className="mt-4 text-sm leading-7 text-muted-foreground">

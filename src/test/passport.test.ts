@@ -112,8 +112,25 @@ describe("Demo flow rules", () => {
     expect(purchaseDevice({ ...device, status: "terjual" }, "buyer").owner).toBe("seller"));
   it("phone IMEI requires exactly 15 digits", () =>
     expect(passportSchema.safeParse({ ...device, serial: "1234" }).success).toBe(false));
-  it("history cannot be dated in future", () =>
-    expect(historySchema.safeParse({ ...record("servis", 1), date: "2026-11-19" }).success).toBe(
+  it("history cannot be dated in future", () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const day = String(tomorrow.getDate()).padStart(2, "0");
+    const tomorrowStr = `${year}-${month}-${day}`;
+    expect(historySchema.safeParse({ ...record("servis", 1), date: tomorrowStr }).success).toBe(
       false,
-    ));
+    );
+  });
+  it("history allows today's date", () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${year}-${month}-${day}`;
+    expect(historySchema.safeParse({ ...record("servis", 1), date: todayStr }).success).toBe(
+      true,
+    );
+  });
 });

@@ -150,7 +150,7 @@ export function PriceSuggestion({ device }: { device: Device }) {
 }
 
 export function DetailScreen({ id }: { id: string }) {
-  const { devices, user, createOrder, orders } = useDemo();
+  const { devices, user, createOrder, orders, withdrawListing } = useDemo();
   const navigate = useNavigate();
   const localDevice = devices.find((x) => x.id === id || x.passportCode === id);
   const [publicDevice, setPublicDevice] = useState<Device | null>(null);
@@ -227,10 +227,20 @@ export function DetailScreen({ id }: { id: string }) {
         return;
       }
       setBuy(false);
-      toast.success("Pesanan dibuat · Dana demo ditahan");
+      toast.success("Pembelian simulasi berhasil · Paspor berpindah ke akun Anda");
       navigate({ to: "/orders/$id", params: { id: orderId } });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!d.listingId) return;
+    try {
+      await withdrawListing(d.listingId);
+      toast.success("Listing berhasil ditarik.");
+    } catch {
+      toast.error("Gagal menarik listing. Coba lagi.");
     }
   };
 
@@ -406,6 +416,7 @@ export function DetailScreen({ id }: { id: string }) {
               owner={owner}
               hasOngoingOrder={hasOngoingOrder}
               requestBuy={requestBuy}
+              onWithdraw={handleWithdraw}
             />
             <p className="mt-2.5 text-center text-[11px] text-muted-foreground">
               Simulasi escrow · Tidak ada pembayaran sungguhan
@@ -548,6 +559,7 @@ export function DetailScreen({ id }: { id: string }) {
             owner={owner}
             hasOngoingOrder={hasOngoingOrder}
             requestBuy={requestBuy}
+            onWithdraw={handleWithdraw}
             compact
           />
         </div>
@@ -558,8 +570,8 @@ export function DetailScreen({ id }: { id: string }) {
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogTitle>Konfirmasi transaksi demo</DialogTitle>
           <DialogDescription className="text-xs leading-relaxed">
-            Dana demo ditahan selama 48 jam masa tinjau perangkat sebelum paspor berpindah ke akun
-            Anda.
+            Ini adalah pembelian simulasi. Paspor akan langsung berpindah ke akun Anda setelah
+            konfirmasi. Tidak ada dana nyata yang dipindahkan.
           </DialogDescription>
           <div className="my-2 rounded-xl bg-muted/50 p-3.5 text-center">
             <p className="text-xs text-muted-foreground">Total pembayaran demo</p>
@@ -645,6 +657,7 @@ function ActionButtons({
   owner,
   hasOngoingOrder,
   requestBuy,
+  onWithdraw,
   compact = false,
 }: {
   d: Device;
@@ -652,6 +665,7 @@ function ActionButtons({
   owner: boolean;
   hasOngoingOrder: boolean;
   requestBuy: () => void;
+  onWithdraw: () => void;
   compact?: boolean;
 }) {
   if (d.status === "terjual") {
@@ -664,6 +678,21 @@ function ActionButtons({
   }
 
   if (owner) {
+    if (d.status === "aktif" && d.listingId) {
+      return (
+        <div className="grid grid-cols-2 gap-2.5">
+          <Button asChild variant="outline" className="h-11">
+            <Link to="/devices/$id" params={{ id }}>
+              <Plus className="size-4" />
+              Catatan
+            </Link>
+          </Button>
+          <Button variant="destructive" className="h-11" onClick={onWithdraw}>
+            Tarik Listing
+          </Button>
+        </div>
+      );
+    }
     return (
       <div className="grid grid-cols-2 gap-2.5">
         <Button asChild variant="outline" className="h-11">

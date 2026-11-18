@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { initialDevices } from "@/lib/demo-data";
 import { conditionToDbValue, type Device, type HistoryRecord } from "@/lib/passport";
 import {
   advanceOrder,
@@ -11,6 +12,7 @@ import {
   type Order,
 } from "@/lib/workflows";
 import {
+  fetchMarketplaceFeed,
   fetchWorkspace,
   recordTitle,
   RECORD_TO_DB_TYPE,
@@ -23,7 +25,7 @@ import { errorMessage } from "@/lib/supabase/errors";
 
 type UserRole = "user" | "mitra";
 type User = { id: string; name: string; role: UserRole };
-type ProfileState = { phone: string; address: string };
+type ProfileState = { phone: string };
 
 type DemoState = {
   devices: Device[];
@@ -76,7 +78,7 @@ type DemoState = {
 
 const DemoContext = createContext<DemoState | null>(null);
 
-const EMPTY_PROFILE: ProfileState = { phone: "", address: "" };
+const EMPTY_PROFILE: ProfileState = { phone: "" };
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -96,6 +98,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [profileName, setProfileName] = useState("Pengguna");
+
+  const feedQuery = useQuery({
+    queryKey: ["marketplace_feed"],
+    queryFn: () => fetchMarketplaceFeed(),
+    enabled: configured,
+    staleTime: 15_000,
+  });
 
   const workspaceQuery = useQuery({
     queryKey: ["workspace", userId],
@@ -130,7 +139,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setAuthReady(true);
       if (!session) {
         queryClient.removeQueries({ queryKey: ["workspace"] });
-        setDevices([]);
         setOrders([]);
         setProfileState(EMPTY_PROFILE);
         setPendingVerifications([]);
@@ -144,13 +152,28 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [configured, queryClient]);
 
   useEffect(() => {
+    if (!configured) {
+      setDevices(initialDevices);
+      return;
+    }
+    const byId = new Map<string, Device>();
+    for (const d of feedQuery.data ?? []) {
+      byId.set(d.id, d);
+    }
+    if (workspaceQuery.data) {
+      for (const d of workspaceQuery.data.devices) {
+        byId.set(d.id, d);
+      }
+    }
+    setDevices([...byId.values()]);
+  }, [configured, feedQuery.data, workspaceQuery.data]);
+
+  useEffect(() => {
     const data = workspaceQuery.data;
     if (!data) return;
-    setDevices(data.devices);
     setOrders(data.orders);
     setProfileState({
       phone: data.profile?.phone ?? "",
-      address: data.profile?.address ?? "",
     });
     setProfileName(data.profile?.full_name || sessionEmail.split("@")[0] || "Pengguna");
     setPendingVerifications(
@@ -180,12 +203,20 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [workspaceQuery.data, sessionEmail]);
 
   useEffect(() => {
+    if (!feedQuery.error) return;
+    toast.error(errorMessage(feedQuery.error, "Gagal memuat feed marketplace."));
+  }, [feedQuery.error]);
+
+  useEffect(() => {
     if (!workspaceQuery.error) return;
-    toast.error(errorMessage(workspaceQuery.error, "Gagal memuat data Supabase."));
+    toast.error(errorMessage(workspaceQuery.error, "Gagal memuat data pengguna."));
   }, [workspaceQuery.error]);
 
   const refresh = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ["workspace"] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["marketplace_feed"] }),
+      queryClient.invalidateQueries({ queryKey: ["workspace"] }),
+    ]);
   }, [queryClient]);
 
   const isMitra = workspaceQuery.data?.profile?.role === "mitra";
@@ -213,12 +244,26 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name } },
+      options: { data: { full_name: name.trim() } },
     });
     if (error) throw new Error(errorMessage(error));
-    if (!data.session) {
-      toast.success("Akun dibuat. Periksa email untuk konfirmasi sebelum masuk.");
+    if (data.session) {
+      setUserId(data.session.user.id);
+      setSessionEmail(data.session.user.email ?? email);
+      return;
     }
+    if (data.user) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (!signInError && signInData.session) {
+        setUserId(signInData.session.user.id);
+        setSessionEmail(signInData.session.user.email ?? email);
+        return;
+      }
+    }
+    throw new Error("Akun dibuat tetapi membutuhkan konfirmasi email sebelum dapat masuk.");
   }, []);
 
   const signOut = useCallback(async () => {
@@ -226,9 +271,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       const supabase = createClient();
       await supabase.auth.signOut();
     }
-    queryClient.clear();
+    queryClient.removeQueries({ queryKey: ["workspace"] });
     setUserId(null);
-    setDevices([]);
     setOrders([]);
     setSaved([]);
     setComparison([]);
@@ -236,6 +280,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setInspections([]);
     setAudit([]);
     setProfileState(EMPTY_PROFILE);
+    await queryClient.invalidateQueries({ queryKey: ["marketplace_feed"] });
   }, [configured, queryClient]);
 
   const createOrder = useCallback(
@@ -423,7 +468,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       const supabase = createClient();
       void supabase
         .from("profiles")
-        .update({ phone: nextProfile.phone, address: nextProfile.address })
+        .update({ phone: nextProfile.phone })
         .eq("id", userId)
         .then(({ error }) => {
           if (error) toast.error(errorMessage(error, "Gagal menyimpan profil."));
@@ -475,15 +520,17 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   );
 
   const withdrawListing = useCallback(
-    async (listingId: string) => {
-      if (isMitra) return;
+    async (listingId: string): Promise<boolean> => {
+      if (isMitra) return false;
       try {
         const supabase = createClient();
         const { error } = await supabase.rpc("withdraw_listing", { p_listing_id: listingId });
         if (error) throw error;
         await refresh();
+        return true;
       } catch (error) {
         toast.error(errorMessage(error, "Gagal menarik listing."));
+        return false;
       }
     },
     [refresh, isMitra],
@@ -597,6 +644,7 @@ async function publishListingFor(device: Device, userId: string): Promise<void> 
   });
   if (error) throw error;
   if (data) {
+    // refresh_listing_estimate is deferred to Session 04; swallow PGRST202 silently.
     await supabase.rpc("refresh_listing_estimate", { p_listing_id: data as string });
   }
 }
