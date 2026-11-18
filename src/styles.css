@@ -850,3 +850,7 @@
     scroll-behavior: auto !important;
   }
 }
+
+html {
+  scrollbar-gutter: stable;
+}

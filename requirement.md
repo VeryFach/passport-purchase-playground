@@ -1,395 +1,325 @@
-# Requirements: Paspor Digital Smartphone & Laptop Bekas
+# MVP Hackathon 24 Jam: Paspor Digital HP & Laptop Bekas
 
-**Versi:** 0.1 (draft untuk validasi)
-**Fokus kategori:** Smartphone dan laptop
-**Status:** Brainstorming ke requirements awal
+**Tagline:** "Carfax untuk HP dan laptop bekas." Setiap perangkat punya paspor digital berisi riwayat terverifikasi, sehingga pembeli yakin dan penjual jujur dapat harga lebih baik.
 
----
-
-## 1. Ringkasan
-
-Platform jual-beli smartphone dan laptop bekas yang kepercayaannya dibangun dari **paspor digital**: catatan terverifikasi tentang identitas perangkat, pembelian, servis, penggantian part, kondisi baterai/penyimpanan, dan rantai kepemilikan. Pemilik mencatat riwayat sejak perangkat dibeli (bukan baru saat mau dijual), sehingga saat dijual, pembeli bisa melihat laporan yang dapat dipercaya dan penjual jujur mendapat harga lebih baik.
-
-**Analogi:** Carfax atau buku servis digital, tetapi untuk HP dan laptop.
+**Versi lengkap:** lihat `requirement.md`. Dokumen ini hanya mengambil yang perlu dibangun dan didemokan dalam 24 jam.
 
 ---
 
-## 2. Problem Framing Map
+## 1. Masalah, Solusi, dan Nilai (ringkas untuk pitch)
 
-| Elemen | Isi |
+| | |
 |---|---|
-| **Siapa yang punya masalah** | Pembeli smartphone/laptop bekas, dan penjual yang perangkatnya sebenarnya terawat |
-| **Konteks** | Transaksi di marketplace umum, grup jual-beli, dan toko tukar tambah. Kepercayaan hanya bergantung pada foto dan omongan penjual |
-| **Problem statement** | Pembeli tidak bisa memverifikasi kondisi asli perangkat bekas, sehingga menawar rendah atau batal membeli. Penjual jujur tidak punya cara membuktikan perangkatnya terawat, sehingga dihargai sama dengan perangkat bermasalah |
-| **Gejala** | Tawar-menawar ekstrem, penipuan, barang tidak sesuai deskripsi, sengketa dan retur, perangkat bagus tertahan lama |
-| **Akar masalah** | (1) Informasi asimetris antara penjual dan pembeli. (2) Riwayat tersebar di nota, WhatsApp, dan service center. (3) Dokumen mudah dipalsukan atau hilang. (4) Tidak ada standar penilaian kondisi. (5) Part ganti non-original dan status kunci (iCloud, FRP, MDM) sulit dicek orang awam |
-| **Dampak** | Pembeli rugi uang, penjual jujur rugi nilai jual (*lemons problem*), pasar tidak efisien |
-| **Solusi yang ada** | Marketplace umum, toko trade-in, garansi toko, aplikasi cek IMEI atau diagnostik. Semuanya parsial: tidak ada riwayat berkelanjutan dan tidak terhubung ke proses jual |
-| **Batasan** | Data harus dapat dipercaya, pemilik malas mencatat, isu privasi, perbedaan data antar merek dan sistem operasi |
-| **Peluang** | Riwayat yang direkam sejak awal menjadi aset yang menaikkan nilai jual kembali |
-
-**How Might We:**
-
-- Bagaimana membuat pencatatan riwayat terasa bermanfaat bagi pemilik, bukan beban administrasi?
-- Bagaimana membuat riwayat sulit dipalsukan tanpa membuat prosesnya rumit?
-- Bagaimana mengubah riwayat terverifikasi menjadi harga lebih tinggi dan penjualan lebih cepat?
-- Bagaimana mendapatkan data dari service center dan merchant tanpa integrasi mahal di awal?
-- Bagaimana menangani perangkat lama yang belum punya riwayat sama sekali?
-
----
-
-## 3. Value Proposition Canvas
-
-### 3.1 Segmen Pembeli
-
-**Customer Profile**
-
-| Jobs | Pains | Gains |
-|---|---|---|
-| Mendapat HP/laptop berkualitas dengan harga di bawah baru | Takut tertipu atau mendapat perangkat bermasalah | Yakin pada kondisi perangkat sebelum bayar |
-| Menilai apakah harga yang diminta wajar | Tidak tahu apakah pernah jatuh, kena air, ganti layar atau baterai non-original | Tahu sisa umur pakai dan biaya perawatan ke depan |
-| Membandingkan beberapa unit sejenis | Foto dan deskripsi bisa direkayasa, kondisi baterai tidak terlihat | Posisi tawar kuat karena punya data objektif |
-| Menyelesaikan transaksi dengan aman | Takut perangkat masih terkunci (iCloud, FRP, MDM) atau IMEI bermasalah | Ada perlindungan bila perangkat tidak sesuai laporan |
-
-**Value Map**
-
-| Products & Services | Pain Relievers | Gain Creators |
-|---|---|---|
-| Laporan paspor perangkat (identitas, servis, part ganti, baterai, kepemilikan) | Riwayat terverifikasi mengurangi risiko tertipu | Skor kondisi (*Trust Score*) yang mudah dibaca |
-| Badge verifikasi bertingkat | Cek otomatis status kunci dan IMEI | Estimasi sisa umur baterai dan harga wajar |
-| Escrow (rekening bersama) | Perlindungan dana dan garansi singkat | Perbandingan antar unit berbasis data |
-| Opsi inspeksi pihak ketiga | Deteksi anomali (misalnya servis berulang di komponen yang sama) | Garansi transfer kepemilikan |
-
-### 3.2 Segmen Penjual
-
-**Customer Profile**
-
-| Jobs | Pains | Gains |
-|---|---|---|
-| Menjual perangkat cepat dengan harga terbaik | Perangkat terawat dihargai sama dengan yang bermasalah | Harga lebih tinggi karena terbukti terawat |
-| Meyakinkan calon pembeli | Dihujani tawaran rendah dan pertanyaan berulang | Laku lebih cepat, lebih sedikit tawar-menawar |
-| Mencari pembeli serius | Takut pembeli palsu atau penipu | Reputasi penjual yang terbangun |
-| Merawat dan melacak perangkat selama dipakai | Nota dan riwayat servis tercecer | Dokumentasi rapi yang tinggal diteruskan ke pembeli |
-
-**Value Map**
-
-| Products & Services | Pain Relievers | Gain Creators |
-|---|---|---|
-| Aplikasi pencatatan riwayat sejak beli (dompet digital perangkat) | Unggah nota/foto cukup scan, tanpa input manual | Pengingat garansi dan servis, sehingga pencatatan punya manfaat harian |
-| Paspor perangkat sekali klik saat jual | Verifikasi pihak ketiga menghilangkan keraguan pembeli | Rekomendasi harga jual berbasis riwayat |
-| Listing otomatis dari data yang sudah ada | Pembayaran aman lewat escrow | Profil dan rating penjual |
-
----
-
-## 4. Tujuan dan Metrik Keberhasilan
-
-| Tujuan | Metrik | Target awal (hipotesis) |
-|---|---|---|
-| Pembeli percaya pada kondisi perangkat | Persentase pembeli yang menyelesaikan transaksi setelah membuka paspor | > 30% dari yang membuka |
-| Perangkat berpaspor lebih cepat laku | Median hari terjual: berpaspor vs tanpa paspor | Lebih cepat ≥ 25% |
-| Perangkat berpaspor lebih mahal | Selisih harga transaksi untuk model dan kondisi setara | Premi ≥ 5% |
-| Pencatatan berkelanjutan | Persentase pengguna yang menambah ≥ 1 catatan per 3 bulan | > 40% |
-| Kepercayaan data | Tingkat sengketa karena laporan tidak sesuai | < 3% transaksi |
-
-> Semua target di atas adalah hipotesis yang harus divalidasi pada tahap MVP (lihat bagian 15).
-
----
-
-## 5. Ruang Lingkup
-
-### 5.1 Dalam Lingkup (MVP)
-
-- Smartphone (Android dan iOS) dan laptop (Windows, macOS, Linux)
-- Pembuatan paspor perangkat dan pencatatan riwayat
-- Verifikasi bertingkat (klaim, dokumen, diagnostik, inspeksi)
-- Cek status kunci dan identitas perangkat
-- Listing jual dengan tampilan paspor
-- Transaksi dengan escrow dan transfer kepemilikan paspor
-
-### 5.2 Di Luar Lingkup (tahap awal)
-
-- Kategori lain (kamera, kendaraan, perabot)
-- Logistik dan pengiriman sendiri
-- Layanan servis atau perbaikan sendiri
-- Integrasi API resmi dengan seluruh pabrikan
-- Asuransi dan garansi bersponsor pihak ketiga (dijajaki setelah MVP)
-
----
-
-## 6. Aktor dan Peran
-
-| Aktor | Deskripsi | Hak utama |
-|---|---|---|
-| **Pemilik/Penjual** | Pengguna yang mencatat riwayat dan menjual perangkat | Membuat paspor, menambah catatan, membuat listing, mengatur privasi data |
-| **Pembeli** | Pengguna yang mencari dan membeli perangkat | Melihat paspor, menawar, membayar via escrow, mengajukan sengketa |
-| **Mitra Servis** | Service center atau toko servis rekanan | Menerbitkan catatan servis terverifikasi |
-| **Inspektur** | Tim internal atau mitra yang memeriksa perangkat | Membuat laporan inspeksi dan memberi badge tertinggi |
-| **Admin** | Operator platform | Moderasi, penanganan sengketa, pengelolaan mitra, audit data |
-
----
-
-## 7. Data yang Dilacak
-
-### 7.1 Data Universal (smartphone dan laptop)
-
-- Identitas perangkat: merek, model, serial number, IMEI (HP), tanggal produksi/aktivasi bila tersedia
-- Bukti pembelian: tanggal, toko, harga, jenis garansi
-- Rantai kepemilikan: pemilik sebelumnya (disamarkan), tanggal transfer
-- Foto kondisi bertanggal (dengan penanda waktu)
-- Riwayat servis dan penggantian part, lengkap dengan bukti
-- Kelengkapan: kotak, charger, aksesori
-
-### 7.2 Data Spesifik Smartphone
-
-| Data | Cara perolehan | Tingkat kepercayaan |
-|---|---|---|
-| Battery health, jumlah siklus | Diagnostik otomatis lewat aplikasi atau foto layar pengaturan | Sedang ke tinggi |
-| Riwayat ganti layar, baterai, kamera, board | Catatan servis + bukti mitra | Tinggi bila dari mitra |
-| Status part (original atau bukan) | Diagnostik dan inspeksi | Tinggi bila diinspeksi |
-| Status kunci: iCloud/Find My, Google FRP, MDM | Pemeriksaan saat verifikasi | Tinggi |
-| Status IMEI (registrasi dan daftar blokir) | Pengecekan terhadap layanan resmi | Tinggi |
-| Kesehatan penyimpanan, sensor, port, speaker, mikrofon | Uji fungsi dalam aplikasi | Sedang |
-| Indikator kontak cairan, bekas jatuh | Inspeksi | Tinggi bila diinspeksi |
-
-### 7.3 Data Spesifik Laptop
-
-| Data | Cara perolehan | Tingkat kepercayaan |
-|---|---|---|
-| Spesifikasi (CPU, RAM, penyimpanan, GPU) | Pembacaan otomatis dari sistem | Tinggi |
-| Kesehatan baterai (wear level, jumlah siklus) | Laporan baterai bawaan OS atau aplikasi | Tinggi |
-| Kesehatan SSD/HDD (SMART, jam pakai, TBW) | Pembacaan otomatis | Tinggi |
-| Suhu dan performa (uji beban singkat) | Uji dalam aplikasi | Sedang |
-| Kondisi fisik: layar, keyboard, engsel, port, bodi | Foto dan inspeksi | Sedang ke tinggi |
-| Riwayat servis dan ganti part (baterai, SSD, RAM, layar, keyboard, thermal paste) | Catatan servis | Tinggi bila dari mitra |
-| Status kunci: BIOS/UEFI, MDM perusahaan, Activation Lock (macOS), lisensi OS | Pemeriksaan saat verifikasi | Tinggi |
-
-### 7.4 Hierarki Kepercayaan Sumber Data
-
-| Level | Sumber | Label ke pembeli |
-|---|---|---|
-| **L4** | Inspeksi tim/mitra resmi atau data langsung dari service center | Terinspeksi |
-| **L3** | Diagnostik otomatis oleh aplikasi (dibaca dari perangkat) | Terdiagnosis |
-| **L2** | Dokumen (nota/foto) yang lolos validasi OCR dan pemeriksaan kewajaran | Berdokumen |
-| **L1** | Klaim penjual tanpa bukti | Klaim penjual |
-
-Setiap field pada paspor wajib menampilkan levelnya.
-
----
-
-## 8. Functional Requirements
-
-Prioritas memakai MoSCoW: **M** (Must), **S** (Should), **C** (Could), **W** (Won't untuk MVP).
-
-### 8.1 Akun dan Profil
-
-| ID | Kebutuhan | Prioritas |
-|---|---|---|
-| FR-001 | Pengguna dapat mendaftar dan masuk dengan email/nomor telepon dan verifikasi OTP | M |
-| FR-002 | Pengguna dapat mengelola profil dan alamat | M |
-| FR-003 | Penjual dapat melakukan verifikasi identitas (KYC ringan) sebelum menjual | S |
-| FR-004 | Pengguna dapat mengatur privasi data yang dibagikan ke pembeli | M |
-
-### 8.2 Paspor Perangkat
-
-| ID | Kebutuhan | Prioritas |
-|---|---|---|
-| FR-010 | Pemilik dapat membuat paspor untuk smartphone atau laptop dengan data identitas perangkat | M |
-| FR-011 | Sistem mencegah satu perangkat (serial/IMEI) memiliki lebih dari satu paspor aktif | M |
-| FR-012 | Pemilik dapat menambah catatan: pembelian, servis, ganti part, kerusakan, foto kondisi | M |
-| FR-013 | Pemilik dapat mengunggah nota/foto bukti dan sistem mengekstrak data dengan OCR | S |
-| FR-014 | Setiap catatan menyimpan penanda waktu, pembuat, dan level kepercayaan sumber | M |
-| FR-015 | Catatan yang sudah terverifikasi tidak dapat dihapus, hanya dapat dikoreksi dengan jejak audit | M |
-| FR-016 | Aplikasi dapat membaca data diagnostik perangkat secara otomatis (baterai, penyimpanan, spesifikasi) | S |
-| FR-017 | Sistem memberi pengingat garansi dan servis berkala | S |
-| FR-018 | Sistem menampilkan estimasi nilai jual perangkat saat ini | C |
-
-### 8.3 Verifikasi
-
-| ID | Kebutuhan | Prioritas |
-|---|---|---|
-| FR-020 | Sistem memeriksa status kunci (iCloud/FRP/MDM/Activation Lock) dan status IMEI sebelum paspor berlabel terverifikasi | M |
-| FR-021 | Mitra servis dapat menerbitkan catatan servis terverifikasi lewat portal atau QR | S |
-| FR-022 | Penjual dapat memesan inspeksi (di tempat mitra atau jarak jauh dengan panduan foto/video langsung) | S |
-| FR-023 | Sistem mendeteksi anomali (misalnya serial tidak cocok dengan nota, servis berulang di komponen yang sama, tanggal tidak wajar) | S |
-| FR-024 | Admin dapat meninjau paspor yang ditandai anomali | M |
-| FR-025 | Sistem memberi **Trust Score** dan badge bertingkat berdasarkan kelengkapan dan level sumber data | M |
-
-### 8.4 Listing dan Pencarian
-
-| ID | Kebutuhan | Prioritas |
-|---|---|---|
-| FR-030 | Penjual dapat membuat listing otomatis dari paspor (spesifikasi dan riwayat terisi) | M |
-| FR-031 | Listing menampilkan ringkasan paspor, Trust Score, dan level sumber tiap data | M |
-| FR-032 | Pembeli dapat mencari dan memfilter berdasarkan model, harga, battery health, badge verifikasi, dan kelengkapan riwayat | M |
-| FR-033 | Pembeli dapat membandingkan hingga 3 listing | S |
-| FR-034 | Sistem menyarankan harga jual berdasarkan riwayat dan data pasar | C |
-| FR-035 | Pembeli dapat menyimpan listing dan mengaktifkan notifikasi harga | C |
-
-### 8.5 Transaksi
-
-| ID | Kebutuhan | Prioritas |
-|---|---|---|
-| FR-040 | Pembeli dan penjual dapat bernegosiasi lewat chat dalam aplikasi | M |
-| FR-041 | Pembayaran memakai escrow: dana ditahan hingga pembeli mengonfirmasi atau masa tinjau berakhir | M |
-| FR-042 | Pembeli memiliki masa tinjau (misalnya 2×24 jam) untuk membandingkan kondisi dengan paspor | M |
-| FR-043 | Setelah transaksi selesai, kepemilikan paspor berpindah ke pembeli dan data pribadi pemilik lama disamarkan | M |
-| FR-044 | Pembeli dapat mengajukan sengketa dengan bukti bila perangkat tidak sesuai paspor | M |
-| FR-045 | Admin dapat memutuskan sengketa dan mengembalikan dana atau melepas dana ke penjual | M |
-| FR-046 | Pembeli dan penjual dapat saling memberi rating | S |
-
-### 8.6 Portal Mitra dan Admin
-
-| ID | Kebutuhan | Prioritas |
-|---|---|---|
-| FR-050 | Admin dapat mengelola mitra servis dan inspektur | M |
-| FR-051 | Mitra dapat mencari perangkat berdasarkan serial/QR dan menambah catatan servis | S |
-| FR-052 | Admin memiliki dasbor sengketa, anomali, dan metrik transaksi | M |
-| FR-053 | Seluruh perubahan data tercatat dalam jejak audit | M |
-
----
-
-## 9. Alur Pengguna Utama
-
-### 9.1 Pemilik Mencatat Riwayat (sejak beli)
-
-1. Pemilik membuka aplikasi dan memilih "Tambah perangkat".
-2. Aplikasi membaca spesifikasi dan identitas perangkat (atau pemilik memindai serial/IMEI).
-3. Pemilik mengunggah foto nota dan garansi, lalu OCR mengisi data.
-4. Sistem membuat paspor dengan level sumber masing-masing.
-5. Selama pemakaian, pemilik menambah catatan servis dan menerima pengingat.
-
-### 9.2 Penjual Menjual Perangkat
-
-1. Penjual memilih perangkat dan menekan "Jual".
-2. Sistem menjalankan pemeriksaan status kunci dan IMEI, serta menghitung Trust Score.
-3. Penjual dapat memesan inspeksi untuk menaikkan badge.
-4. Sistem membuat draf listing otomatis; penjual menentukan harga dan data yang dibagikan.
-5. Listing tayang dengan tampilan paspor.
-
-### 9.3 Pembeli Membeli
-
-1. Pembeli mencari dan memfilter listing, lalu membuka paspor.
-2. Pembeli bernegosiasi lewat chat dan membayar ke escrow.
-3. Perangkat dikirim atau diserahkan; pembeli mengecek kesesuaian dengan paspor dalam masa tinjau.
-4. Bila sesuai, pembeli konfirmasi dan dana dilepas; paspor berpindah kepemilikan.
-5. Bila tidak sesuai, pembeli mengajukan sengketa.
-
-### 9.4 Perangkat Lama Tanpa Riwayat (cold start)
-
-1. Penjual mengunggah foto dan menjalankan diagnostik otomatis.
-2. Penjual memesan inspeksi sekali jalan.
-3. Sistem membuat paspor "awal" dengan data L3/L4 saja; kolom riwayat lama diberi label jelas "tidak tersedia" (bukan dianggap buruk).
-
----
-
-## 10. Aturan Bisnis dan Trust Score
-
-- **BR-01:** Satu perangkat (serial/IMEI) hanya boleh memiliki satu paspor aktif.
-- **BR-02:** Badge "Terverifikasi" hanya diberikan jika status kunci bersih dan IMEI valid.
-- **BR-03:** Data level L1 selalu ditampilkan dengan label "Klaim penjual" dan tidak dihitung penuh pada skor.
-- **BR-04:** Catatan terverifikasi tidak boleh dihapus; koreksi menimbulkan versi baru dengan alasan.
-- **BR-05:** Perangkat dengan status terkunci, terblokir, atau terindikasi hasil kejahatan tidak boleh dilisting.
-- **BR-06:** Penjual hanya dapat menyembunyikan data pribadi, bukan riwayat teknis yang relevan dengan kondisi (misalnya ganti layar).
-
-**Komponen Trust Score (usulan awal, bobot dikalibrasi saat MVP):**
-
-| Komponen | Contoh bobot |
-|---|---|
-| Keaslian identitas dan status kunci | 30% |
-| Kelengkapan dan kualitas riwayat (servis, nota) | 25% |
-| Kondisi teknis (baterai, penyimpanan, fungsi) | 25% |
-| Level verifikasi (L1 sampai L4) | 15% |
-| Reputasi penjual | 5% |
-
----
-
-## 11. Non-Functional Requirements
-
-| ID | Kategori | Kebutuhan |
-|---|---|---|
-| NFR-01 | Keamanan data | Data pribadi dan dokumen dienkripsi saat transit dan saat disimpan |
-| NFR-02 | Integritas | Catatan riwayat bersifat *append-only* dengan jejak audit; dapat memakai hash berantai agar mudah dideteksi bila ada perubahan |
-| NFR-03 | Privasi | Mengikuti UU Pelindungan Data Pribadi (UU PDP): persetujuan eksplisit, hak akses dan penghapusan data pribadi, minimisasi data |
-| NFR-04 | Kinerja | Halaman paspor dan listing termuat < 3 detik pada koneksi 4G |
-| NFR-05 | Ketersediaan | Target uptime 99,5% |
-| NFR-06 | Skalabilitas | Mendukung penambahan kategori baru tanpa mengubah inti skema data |
-| NFR-07 | Kegunaan | Pembuatan paspor selesai < 5 menit; antarmuka berbahasa Indonesia, mudah dipakai di ponsel |
-| NFR-08 | Platform | Aplikasi Android dan iOS, plus web untuk pembeli dan portal mitra |
-| NFR-09 | Anti-penipuan | Rate limiting, deteksi akun ganda, dan pemantauan pola mencurigakan |
-| NFR-10 | Ketertelusuran | Setiap catatan dapat ditelusuri ke pembuat, waktu, dan sumber bukti |
-
----
-
-## 12. Model Data Tingkat Tinggi
-
-| Entitas | Atribut utama |
-|---|---|
-| **User** | id, nama, kontak, status KYC, peran, rating |
-| **Device** | id, jenis (HP/laptop), merek, model, serial, IMEI, spesifikasi, status kunci, status aktif |
-| **Passport** | id, device_id, pemilik saat ini, trust_score, badge, versi |
-| **Ownership** | id, device_id, user_id, tanggal mulai, tanggal selesai, sumber (beli baru/bekas) |
-| **HistoryRecord** | id, passport_id, tipe (pembelian/servis/ganti part/kerusakan/diagnostik/inspeksi), data, bukti, level sumber, pembuat, waktu, versi |
-| **Evidence** | id, record_id, tipe file, hasil OCR, hash file |
-| **Inspection** | id, device_id, inspektur, hasil per komponen, foto, waktu |
-| **Listing** | id, passport_id, penjual, harga, status, data yang dibagikan |
-| **Transaction** | id, listing_id, pembeli, status escrow, tanggal tinjau, hasil |
-| **Dispute** | id, transaction_id, alasan, bukti, keputusan |
-| **Partner** | id, nama, jenis (servis/inspeksi), area, status |
-| **AuditLog** | id, aktor, aksi, objek, waktu, nilai sebelum/sesudah |
-
----
-
-## 13. Asumsi, Risiko, dan Mitigasi
-
-| # | Risiko / Asumsi | Dampak | Mitigasi |
+| **Masalah** | Pembeli HP/laptop bekas tidak bisa memverifikasi kondisi asli (ganti part, baterai, riwayat servis). Penjual jujur tidak bisa membuktikan perangkatnya terawat, jadi dihargai sama dengan yang bermasalah. |
+| **Akar masalah** | Informasi asimetris, riwayat tercecer (nota, WA), dokumen mudah dipalsukan, tidak ada standar penilaian. |
+| **Solusi** | Paspor digital per perangkat: riwayat servis dan kondisi yang diberi **level kepercayaan** per data, ditambah **Trust Score** yang mudah dibaca. |
+| **Pembeli dapat** | Keyakinan sebelum bayar, tahu apa yang sudah diganti, posisi tawar berbasis data. |
+| **Penjual dapat** | Bukti perangkat terawat, listing otomatis dari paspor, laku lebih cepat dan lebih mahal. |
+
+**Value Proposition (satu tabel)**
+
+| Segmen | Pain utama | Pain reliever | Gain creator |
 |---|---|---|---|
-| 1 | **Cold start:** perangkat lama belum punya riwayat | Paspor kosong, nilai produk rendah | Inspeksi sekali jalan; diagnostik otomatis; label "riwayat tidak tersedia" yang netral |
-| 2 | **Pemalsuan data** (nota, foto, hasil diagnostik) | Kepercayaan runtuh | Validasi OCR dan pemeriksaan kewajaran; foto langsung dengan penanda waktu; mitra servis; inspeksi untuk badge tertinggi |
-| 3 | **Pemilik malas mencatat** | Data tipis | Manfaat harian: pengingat garansi/servis, estimasi nilai, pembacaan data otomatis |
-| 4 | **Pembeli belum tentu mau bayar lebih** | Model bisnis gagal | Uji kemauan membayar dan *concierge MVP* sebelum membangun penuh |
-| 5 | **Keterbatasan akses diagnostik** (terutama iOS dan pembatasan OS) | Data otomatis terbatas | Mulai dari data yang dapat dibaca secara resmi; sisanya foto layar bertanda waktu dan inspeksi |
-| 6 | **Perangkat curian atau terblokir** | Risiko hukum dan reputasi | Pemeriksaan IMEI dan kunci wajib; kebijakan pelaporan; kerja sama dengan pihak berwenang bila perlu |
-| 7 | **Privasi** | Sanksi dan hilangnya kepercayaan | Kontrol penjual atas data, penyamaran data pribadi, kepatuhan UU PDP |
-| 8 | **Efek dua sisi** (butuh pembeli dan penjual) | Marketplace sepi | Mulai dari satu kota/komunitas dan satu segmen model populer |
-| 9 | **Biaya inspeksi tinggi** | Margin tipis | Inspeksi jarak jauh bertahap, mitra servis, premi dibebankan ke penjual |
+| Pembeli | Takut tertipu, tidak tahu part yang pernah diganti | Riwayat berlabel sumber + badge verifikasi | Trust Score, perbandingan harga wajar |
+| Penjual | Dihargai sama dengan perangkat bermasalah | Paspor siap tayang, verifikasi mitra | Harga lebih tinggi, laku lebih cepat |
 
 ---
 
-## 14. Model Bisnis
+## 2. Scope MVP
 
-- Komisi transaksi
-- Biaya inspeksi dan verifikasi
-- Listing premium atau sorotan
-- Langganan untuk reseller/dealer kecil
-- Kemitraan: service center, penyedia garansi/asuransi perangkat bekas
+### Dikerjakan (real)
+
+1. Daftar dan masuk
+2. Buat paspor perangkat (HP atau laptop)
+3. Tambah catatan riwayat + unggah foto bukti
+4. Level kepercayaan per catatan (L1, L2, L3) dan **Trust Score otomatis**
+5. Simulasi verifikasi oleh mitra servis (peran "Mitra")
+6. Listing dan halaman detail paspor (publik)
+7. QR code paspor (tinggal dipindai di demo)
+8. Beli dan transfer kepemilikan paspor
+9. **Estimasi harga wajar** (rumus berbasis data pasar sampel + AI penjelas) dan label Murah/Wajar/Mahal pada listing
+
+### Dipalsukan atau disimulasikan (cukup di demo)
+
+| Fitur | Cara di MVP |
+|---|---|
+| Escrow dan pembayaran | Tombol "Beli" langsung mengubah status, tanpa uang sungguhan |
+| Cek IMEI dan status kunci (iCloud/FRP) | Toggle manual dari penjual + label "klaim"; tampilkan sebagai ide integrasi |
+| Diagnostik otomatis (baterai, SSD) | Input manual atau foto layar pengaturan |
+| Inspeksi pihak ketiga | Diwakili peran "Mitra" yang menekan tombol Verifikasi |
+| KYC, chat, rating, sengketa | Tidak dibuat; masuk slide roadmap |
+| Data harga pasar | Sampel manual 15-20 model, bukan data real-time dan bukan hasil scraping |
+
+### Opsional (kalau waktu sisa, nilai plus untuk juri)
+
+- **OCR nota dengan AI:** unggah foto nota, AI mengisi tanggal, toko, harga, dan jenis servis otomatis.
+- **Deteksi anomali sederhana (aturan atau AI):** misalnya tanggal servis lebih awal dari tanggal beli, atau servis layar berulang.
 
 ---
 
-## 15. Rencana Validasi dan Roadmap
+## 3. Aktor
 
-### 15.1 Validasi Sebelum Membangun
+| Aktor | Peran di MVP |
+|---|---|
+| **Pengguna (user)** | Individu perorangan yang bisa mendaftarkan perangkatnya, mencatat riwayat, menjual (membuat listing), sekaligus mencari dan membeli perangkat dari pengguna lain. |
+| **Mitra Servis** | Mitra Servis (mitra): Teknisi/tempat servis yang memverifikasi catatan perbaikan agar naik ke level L3. |
 
-1. Wawancara 10 sampai 15 pembeli dan 10 penjual HP/laptop bekas tentang pengalaman buruk terakhir mereka.
-2. Uji kemauan membayar: tanyakan berapa mereka rela bayar lebih untuk perangkat berpaspor.
-3. *Concierge MVP*: buat laporan paspor secara manual untuk 10 sampai 20 perangkat; bandingkan kecepatan dan harga jual dengan perangkat tanpa laporan.
-4. Petakan 3 sampai 5 service center atau toko yang mau jadi mitra data.
+*(Pengguna dapat memiliki peran pemilik dan pembeli sekaligus. Peran Mitra cukup dibedakan lewat satu field `role` di profil.)*
 
-### 15.2 Roadmap Bertahap
+---
 
-| Fase | Isi | Kriteria lanjut |
+## 4. Functional Requirements (Must-have saja)
+
+| ID | Kebutuhan | Prioritas |
 |---|---|---|
-| **Fase 0: Validasi** | Wawancara, concierge MVP, uji harga | Ada bukti premi harga atau kecepatan jual |
-| **Fase 1: MVP** | Paspor dasar, diagnostik otomatis (Android dan Windows dahulu), cek kunci/IMEI, listing, escrow | Transaksi berulang dan sengketa terkendali |
-| **Fase 2: Verifikasi dalam** | Portal mitra servis, inspeksi jarak jauh, deteksi anomali, Trust Score terkalibrasi | Tingkat sengketa turun, volume naik |
-| **Fase 3: Ekspansi** | iOS dan macOS lebih dalam, integrasi pabrikan, garansi/asuransi, kategori baru | Pertumbuhan stabil dan unit ekonomi sehat |
+| FR-01 | Pengguna dapat mendaftar dan masuk (email + password atau magic link) | Must |
+| FR-02 | Pemilik membuat paspor: jenis (HP/laptop), merek, model, serial/IMEI, tahun beli, harga beli, foto | Must |
+| FR-03 | Pemilik menambah catatan riwayat: tipe (pembelian, servis, ganti part, baterai, kerusakan), tanggal, deskripsi, foto bukti | Must |
+| FR-04 | Setiap catatan punya level: **L1** klaim, **L2** berdokumen (ada foto bukti), **L3** terverifikasi mitra | Must |
+| FR-05 | Mitra dapat memverifikasi catatan, levelnya naik ke L3 | Must |
+| FR-06 | Sistem menghitung **Trust Score (0-100)** otomatis dari isi paspor | Must |
+| FR-07 | Pemilik dapat mempublikasikan paspor sebagai listing dengan harga | Must |
+| FR-08 | Pembeli melihat daftar listing (filter jenis, rentang harga, skor minimum) | Must |
+| FR-09 | Halaman detail menampilkan paspor: spesifikasi, timeline riwayat, badge level per catatan, Trust Score | Must |
+| FR-10 | Pembeli menekan "Beli": status listing menjadi terjual dan kepemilikan paspor pindah | Must |
+| FR-11 | Setiap paspor punya QR code yang membuka halaman detailnya | Should |
+| FR-12 | Unggah nota, AI mengekstrak data otomatis (OCR) | Could |
+| FR-13 | Peringatan anomali pada paspor (tanggal janggal, servis berulang) | Could |
+| FR-14 | Sistem menghitung estimasi harga wajar (rentang) dari harga dasar pasar (tabel sampel) × faktor kondisi × premi Trust Score | Should |
+| FR-15 | AI menjelaskan estimasi (2-3 alasan singkat, format JSON); pagar pengaman membatasi hasil AI maksimal ±15% dari hasil rumus, dan jika AI gagal sistem memakai hasil rumus | Should |
+| FR-16 | Listing menampilkan label **Murah / Wajar / Mahal** dan "nilai tambah paspor" (selisih harga akibat premi Trust Score) | Should |
 
 ---
 
-## 16. Pertanyaan Terbuka
+## 5. Trust Score dan Estimasi Harga
 
-1. Segmen awal: HP, laptop, atau keduanya sekaligus? Merek/model populer apa yang paling dulu?
-2. Kota atau komunitas pertama untuk uji pasar?
-3. Apakah platform memegang dana (escrow sendiri) atau bermitra dengan penyedia pembayaran berlisensi?
-4. Seberapa jauh platform menjamin laporan (garansi sendiri atau sebatas informasi)?
-5. Siapa mitra inspeksi awal: tim sendiri atau toko servis rekanan?
-6. Batas kewenangan hukum terkait perangkat terindikasi curian: kebijakan pelaporan seperti apa?
+### 5.1 Trust Score (aturan sederhana)
+
+Total 100 poin, dihitung dari isi paspor:
+
+| Komponen | Poin | Kondisi |
+|---|---|---|
+| Identitas lengkap | 20 | Serial/IMEI dan foto terisi |
+| Bukti pembelian | 15 | Ada catatan pembelian dengan foto nota |
+| Kondisi baterai | 15 | Ada catatan baterai (L2 atau lebih) |
+| Riwayat servis terdokumentasi | 20 | Maks 20: 5 poin per catatan servis ber-bukti (maksimal 4) |
+| Verifikasi mitra | 20 | Maks 20: 10 poin per catatan L3 (maksimal 2) |
+| Status kunci bersih | 10 | Penjual menyatakan iCloud/FRP/MDM bebas |
+
+**Badge:** 0-39 *Dasar*, 40-69 *Berdokumen*, 70-100 *Terpercaya*.
+
+Aturan tambahan: catatan L1 tampil dengan label "Klaim penjual" dan tidak menambah skor.
+
+### 5.2 Estimasi Harga (Rumus + AI)
+
+**Prinsip:** harga dasar berasal dari data pasar yang kita sediakan, bukan dari ingatan AI. **Rumus yang menghitung angka, AI yang menjelaskan** dan boleh menyesuaikan sedikit dalam batas aman.
+
+**Alur**
+
+| Langkah | Proses |
+|---|---|
+| 1 | Ambil harga dasar dari tabel `market_prices` berdasarkan model dan usia perangkat (dari `tahun_beli`) |
+| 2 | Kalikan dengan faktor kondisi (baterai, part non-original, kondisi fisik) |
+| 3 | Tambahkan premi Trust Score |
+| 4 | Kirim data terstruktur dan hasil rumus ke AI; AI mengembalikan rentang dan alasan dalam JSON |
+| 5 | Pagar pengaman: bila hasil AI di luar ±15% dari hasil rumus atau format salah, pakai hasil rumus |
+| 6 | Simpan hasil di listing, lalu hitung label Murah / Wajar / Mahal |
+
+**Rumus**
+
+```
+harga_estimasi = harga_dasar_usia
+               × faktor_baterai     (>=90% = 1.00 | 80-89% = 0.95 | <80% = 0.88)
+               × faktor_part        (tiap part utama non-original = 0.92)
+               × faktor_fisik       (mulus 1.00 | lecet ringan 0.96 | retak/penyok 0.85)
+               × (1 + premi_trust)  (Trust Score 70+ = +6% | 40-69 = +3% | <40 = 0%)
+
+rentang = harga_estimasi ± 7%
+nilai_tambah_paspor = (harga_dasar_usia × faktor_baterai × faktor_part × faktor_fisik) × premi_trust
+```
+
+Angka faktor di atas hanya titik awal. Sesuaikan dengan data sampel yang dikumpulkan tim.
+
+**Contoh perhitungan (angka ilustrasi):** HP berusia 3 tahun dengan harga dasar Rp 6.000.000, baterai 91%, semua part original, lecet ringan, Trust Score 78.
+
+```
+6.000.000 × 1.00 × 1.00 × 0.96 × 1.06 = Rp 6.105.600
+Rentang          : Rp 5,68 jt - Rp 6,53 jt
+Nilai tambah paspor: sekitar Rp 346 rb
+```
+
+**Label di listing**
+
+| Kondisi harga minta | Label |
+|---|---|
+| Di bawah batas bawah rentang | Murah |
+| Di dalam rentang | Wajar |
+| Di atas batas atas rentang | Mahal |
+
+**Contoh output AI (JSON)**
+
+```json
+{
+  "harga_min": 5700000,
+  "harga_max": 6500000,
+  "alasan": [
+    "Baterai 91% termasuk sehat untuk usia 3 tahun",
+    "Ganti layar original terverifikasi mitra menambah kepercayaan",
+    "Lecet ringan menurunkan harga sedikit"
+  ],
+  "peringatan": null
+}
+```
+
+**Tabel `market_prices` (diisi manual, 15-20 model populer)**
+
+| Kolom | Isi |
+|---|---|
+| jenis, merek, model, varian | Contoh: HP / merek / seri / kapasitas, atau laptop / merek / seri / RAM-SSD |
+| harga_baru | Harga baru saat rilis atau saat ini |
+| harga_bekas_1th, harga_bekas_2th, harga_bekas_3th | Median harga bekas dari pengamatan manual di marketplace |
+| catatan_sumber, updated_at | Dari mana dan kapan data diambil |
+
+Usia di antara titik data dihitung dengan interpolasi sederhana.
+
+---
+
+## 6. Model Data (5 tabel)
+
+| Tabel | Kolom utama |
+|---|---|
+| **profiles** | id, nama, role (`user` / `mitra`) |
+| **devices** | id, owner_id, jenis, merek, model, serial_imei, tahun_beli, harga_beli, foto_url, kunci_bersih (bool), battery_health (%), kondisi_fisik (`mulus` / `lecet` / `rusak`), trust_score |
+| **history_records** | id, device_id, tipe, tanggal, deskripsi, bukti_url, level (1/2/3), part_original (bool, untuk catatan ganti part), verified_by, created_at |
+| **listings** | id, device_id, seller_id, harga, estimasi_min, estimasi_max, nilai_tambah_paspor, alasan_ai (JSON), label_harga, status (`aktif` / `terjual`), buyer_id, created_at |
+| **market_prices** | id, jenis, merek, model, varian, harga_baru, harga_bekas_1th, harga_bekas_2th, harga_bekas_3th, catatan_sumber, updated_at |
+
+**Catatan:** riwayat kepemilikan cukup dicatat lewat `listings` (seller dan buyer). Foto disimpan di storage. Trust Score dihitung ulang tiap catatan berubah (fungsi di server atau trigger database). Estimasi harga dihitung di server (API route) supaya kunci API AI tidak terekspos di browser, dan hasilnya disimpan di `listings` agar tidak dihitung ulang setiap halaman dibuka.
+
+---
+
+## 7. Tech Stack (usulan, pilih yang tim kuasai)
+
+| Lapisan | Pilihan |
+|---|---|
+| Frontend | Next.js (React) + Tailwind, responsif untuk ponsel |
+| Backend + DB + Auth + Storage | Supabase (Postgres, Auth, Storage, Row Level Security) |
+| QR code | Library `qrcode` |
+| Estimasi harga + penjelasan AI | Rumus di server (API route Next.js) + panggilan API model AI dengan output JSON; kunci API disimpan di environment variable server |
+| OCR/anomali (opsional) | Panggilan API ke model AI dengan input foto nota |
+| Deploy | Vercel |
+
+---
+
+## 8. Layar yang Dibuat (7 saja)
+
+1. Login/Daftar
+2. Beranda: daftar listing + filter
+3. Detail Paspor (inti demo): spesifikasi, Trust Score, timeline riwayat, estimasi harga + label Murah/Wajar/Mahal + nilai tambah paspor, tombol Beli
+4. Perangkat Saya: daftar paspor milik pengguna
+5. Buat/Edit Paspor + tambah catatan
+6. Buat Listing (menampilkan harga disarankan dan alasan AI)
+7. Dasbor Mitra: daftar catatan menunggu verifikasi
+
+---
+
+## 9. Rencana Kerja 24 Jam
+
+| Jam | Fokus | Hasil |
+|---|---|---|
+| 0-2 | Sepakati scope, alur demo, pembagian tugas, setup repo dan Supabase | Skema DB + auth siap |
+| 2-8 | CRUD paspor dan riwayat, unggah foto, level L1/L2 | Paspor bisa dibuat dan diisi |
+| 8-12 | Trust Score, peran Mitra + verifikasi L3 | Skor dan badge berfungsi |
+| 12-17 | Listing, beranda + filter, halaman detail, tombol Beli dan transfer | Alur end-to-end jalan |
+| 17-20 | Estimasi harga: rumus, panggilan AI + pagar pengaman, label di UI | Harga disarankan dan label tampil |
+| 20-22 | QR code, polesan UI, data dummy (5-8 perangkat dengan cerita beragam) | Siap didemokan |
+| 22-24 | Bug fixing, latihan demo, slide pitch. Opsional bila ada sisa waktu: OCR nota atau deteksi anomali | Siap tampil |
+
+**Pembagian tim (contoh 3-4 orang):** frontend UI, backend/Supabase dan logika skor, estimasi harga/AI (termasuk mengisi `market_prices` sejak jam 2-8 secara paralel), serta pitch dan data dummy.
+
+---
+
+## 10. Skenario Demo (3-4 menit)
+
+1. **Masalah (30 dtk):** "Dua iPhone, harga sama. Mana yang terawat?"
+2. **Penjual (60 dtk):** Buat paspor, tambah catatan ganti baterai dengan foto nota, lalu Mitra memverifikasinya. Trust Score naik secara langsung, dan harga disarankan ikut naik lengkap dengan alasan dari AI.
+3. **Pembeli (60 dtk):** Pindai QR atau buka listing, lihat timeline riwayat dan badge level. Bandingkan unit ber-skor tinggi dan rendah; label Murah/Wajar/Mahal langsung menunjukkan apakah harga minta masuk akal.
+4. **Transaksi (30 dtk):** Tekan "Beli", paspor pindah kepemilikan.
+5. **Penutup (30 dtk):** Roadmap singkat: integrasi service center, diagnostik otomatis, cek IMEI, escrow, kategori lain.
+
+**Siapkan data dummy:** satu unit "bersih dan terverifikasi" (skor tinggi), satu unit "banyak klaim tanpa bukti" (skor rendah), dan satu unit dengan anomali (jika fitur opsional dibuat).
+
+---
+
+## 11. Batasan Sistem
+
+Dokumen ini jujur soal apa yang **tidak** dilakukan MVP. Batasan ini juga bahan jawaban saat juri bertanya.
+
+### 11.1 Batasan Fungsional
+
+- Tidak memproses pembayaran atau menahan dana; tombol "Beli" hanya mengubah status listing dan kepemilikan paspor.
+- Tidak mengecek IMEI maupun status iCloud/FRP/MDM ke sumber resmi; status kunci adalah pernyataan penjual.
+- Tidak membaca data diagnostik dari perangkat; persentase baterai dan kondisi fisik diinput manual.
+- Tidak ada chat, rating, sengketa, KYC, pengiriman, maupun garansi.
+- Hanya mencakup HP dan laptop, satu bahasa (Indonesia), berupa web responsif (bukan aplikasi native).
+
+### 11.2 Batasan Data dan Verifikasi
+
+- **L1 (klaim)** dan **L2 (berdokumen)** tidak membuktikan keaslian. L2 hanya berarti ada foto bukti.
+- **L3** hanya sekuat mitra yang memverifikasi; di MVP mitra adalah akun demo (simulasi), bukan service center sungguhan.
+- Sistem tidak mendeteksi nota palsu. Fitur anomali (opsional) hanya memeriksa kewajaran, misalnya urutan tanggal.
+- Trust Score menunjukkan kelengkapan dan tingkat kepercayaan data, **bukan jaminan kondisi fisik** perangkat.
+
+### 11.3 Batasan Estimasi Harga
+
+- Data harga pasar adalah **sampel manual** (15-20 model) dan cepat usang; bukan data real-time.
+- Model yang tidak ada di `market_prices` tidak diestimasi; sistem menampilkan "belum didukung" dan AI tidak boleh menebak harga dasar.
+- Hasil berupa **rentang indikatif**, bukan penilaian resmi dan bukan jaminan barang laku di harga tersebut.
+- Faktor kondisi dan premi Trust Score adalah asumsi awal yang belum dikalibrasi dengan data transaksi nyata. Ini **bukan model machine learning terlatih**.
+- AI hanya menjelaskan dan menyesuaikan maksimal ±15% dari hasil rumus. Bila AI lambat, gagal, atau formatnya salah, sistem memakai hasil rumus dengan alasan templat.
+- Estimasi belum memperhitungkan lokasi, promo/musim, kelengkapan kotak dan aksesori, warna, atau kelangkaan varian.
+
+### 11.4 Batasan Keamanan, Privasi, dan Hukum
+
+- Keamanan dasar saja: autentikasi dan Row Level Security Supabase. Belum ada audit keamanan atau rate limiting.
+- Halaman paspor publik tidak menampilkan data pribadi pemilik, dan serial/IMEI ditampilkan sebagian (disamarkan).
+- Belum memenuhi kepatuhan penuh UU Pelindungan Data Pribadi, perlindungan konsumen, atau regulasi marketplace; ini prototipe.
+- Perangkat curian atau terblokir tidak dapat dideteksi selain lewat pernyataan penjual.
+
+### 11.5 Batasan Teknis dan Demo
+
+- Data yang tampil adalah data dummy untuk demo, bukan data produksi.
+- Dirancang untuk puluhan pengguna dan ratusan data di paket gratis (Supabase/Vercel); tidak diuji beban.
+- Membutuhkan koneksi internet; tidak ada mode offline.
+- Bergantung pada layanan AI pihak ketiga: ada latensi beberapa detik, biaya per panggilan, dan hasil bisa berbeda antar panggilan (karena itu hasil disimpan di `listings`).
+- Unggahan foto dibatasi format JPG/PNG dan ukuran maksimal sekitar 5 MB.
+
+### 11.6 Cara Menyampaikan ke Juri
+
+Pisahkan dengan jelas: **yang nyata** (alur paspor, level kepercayaan, Trust Score, estimasi harga, transfer kepemilikan) dan **yang disimulasikan** (mitra, pembayaran, cek IMEI/kunci, data harga pasar). Lalu tunjukkan roadmap untuk mengganti simulasi menjadi integrasi sungguhan.
+
+---
+
+## 12. Risiko Hackathon dan Cara Mengatasinya
+
+| Risiko | Mitigasi |
+|---|---|
+| Scope melebar | Patuhi daftar "Dikerjakan" dan "Dipalsukan"; fitur opsional baru disentuh setelah alur utama jalan |
+| Juri bertanya soal pemalsuan data | Jawab dengan hierarki level L1-L3 dan rencana integrasi mitra serta diagnostik otomatis |
+| Juri bertanya soal model bisnis | Komisi transaksi, biaya verifikasi mitra, dan langganan untuk reseller |
+| Demo bermasalah | Siapkan data dummy dan rekaman cadangan alur demo |
+| Juri meragukan akurasi estimasi harga | Jelaskan: harga dasar dari data pasar sampel, AI hanya menyesuaikan maksimal ±15%, hasil berupa rentang; roadmap: kalibrasi dengan data transaksi nyata |
+| API AI lambat atau gagal saat demo | Fallback otomatis ke hasil rumus; simpan estimasi yang sudah dihitung agar demo tidak bergantung pada panggilan langsung |
+
+---
+
+## 13. Kriteria Selesai (Definition of Done)
+
+- [ ] Pengguna dapat login, membuat paspor, dan menambah catatan beserta foto
+- [ ] Mitra dapat memverifikasi catatan dan Trust Score berubah
+- [ ] Listing tampil di beranda dan detail paspor menampilkan timeline serta badge level
+- [ ] Tombol Beli memindahkan kepemilikan
+- [ ] Estimasi harga (rentang + alasan) tampil di form listing, dan label Murah/Wajar/Mahal tampil di listing
+- [ ] `market_prices` terisi minimal 10 model dan fallback ke rumus berfungsi saat AI gagal
+- [ ] Aplikasi ter-deploy dan dapat dibuka dari ponsel
+- [ ] Data dummy dan slide pitch siap
