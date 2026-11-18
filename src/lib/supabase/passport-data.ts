@@ -377,6 +377,11 @@ async function fetchFeed(): Promise<MarketplaceFeedRow[]> {
   return (v1.data as MarketplaceFeedRow[] | null) ?? [];
 }
 
+export async function fetchMarketplaceFeed(): Promise<Device[]> {
+  const [feed, markets] = await Promise.all([fetchFeed(), fetchMarketPrices()]);
+  return feed.map((row) => deviceFromFeedRow(row, markets));
+}
+
 export async function fetchWorkspace(userId: string): Promise<WorkspaceData> {
   const supabase = createClient();
 
@@ -405,9 +410,6 @@ export async function fetchWorkspace(userId: string): Promise<WorkspaceData> {
     .filter((path): path is string => Boolean(path));
   const signedUrls = await createSignedEvidenceMap(evidencePaths);
 
-  const feed = await fetchFeed();
-  const feedDevices = feed.map((row) => deviceFromFeedRow(row, markets));
-
   const ownedDevices = owned.map((row) =>
     deviceFromOwnedRow(
       row,
@@ -419,8 +421,6 @@ export async function fetchWorkspace(userId: string): Promise<WorkspaceData> {
   );
 
   const byId = new Map<string, Device>();
-  for (const device of feedDevices) byId.set(device.id, device);
-  // Owned rows are richer than public feed rows, so they win on collision.
   for (const device of ownedDevices) byId.set(device.id, device);
 
   const transactionsResult = await supabase

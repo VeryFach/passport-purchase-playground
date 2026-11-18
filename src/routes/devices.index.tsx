@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useDemo } from "@/components/demo-provider";
 import { EmptyState, PageHeading, PassportCard } from "@/components/passport-ui";
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/devices/")({
   component: Devices,
 });
 function Devices() {
-  const { devices, user } = useDemo();
+  const { devices, user, withdrawListing } = useDemo();
   const [status, setStatus] = useState("all");
   const owned = devices.filter(
     (d) => d.owner === user?.id && (status === "all" || d.status === status),
@@ -82,13 +83,28 @@ function Devices() {
                       Servis berikutnya · {dateLabel(d.serviceDue)}
                     </p>
                   )}
-                  {d.status !== "terjual" && (
+                  {d.status === "aktif" && d.listingId ? (
+                    <Button
+                      variant="destructive"
+                      className="mt-3 h-11 w-full"
+                      onClick={async () => {
+                        try {
+                          await withdrawListing(d.listingId!);
+                          toast.success("Listing berhasil ditarik.");
+                        } catch {
+                          toast.error("Gagal menarik listing. Coba lagi.");
+                        }
+                      }}
+                    >
+                      Tarik Listing
+                    </Button>
+                  ) : d.status !== "terjual" ? (
                     <Button asChild variant="outline" className="mt-3 h-11 w-full">
                       <Link to="/devices/$id/listing" params={{ id: d.id }}>
                         Jual perangkat
                       </Link>
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               ))}
             </div>
