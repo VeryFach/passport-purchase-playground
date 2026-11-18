@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { fetchPublicDevice } from "@/lib/supabase/passport-data";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -151,6 +152,7 @@ export function PriceSuggestion({ device }: { device: Device }) {
 export function DetailScreen({ id }: { id: string }) {
   const { devices, user, createOrder, orders } = useDemo();
   const navigate = useNavigate();
+<<<<<<< Updated upstream
   const d = devices.find((x) => x.id === id);
 
   const [buy, setBuy] = useState(false);
@@ -159,14 +161,44 @@ export function DetailScreen({ id }: { id: string }) {
   const [evidence, setEvidence] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+=======
+  const localDevice = devices.find((x) => x.id === id || x.passportCode === id);
+  const [publicDevice, setPublicDevice] = useState<Device | null>(null);
+  const d = localDevice ?? publicDevice;
+  const [buy, setBuy] = useState(false),
+    [qrOpen, setQrOpen] = useState(false),
+    [qr, setQr] = useState(""),
+    [evidence, setEvidence] = useState<string | null>(null),
+    [busy, setBusy] = useState(false);
+>>>>>>> Stashed changes
+  useEffect(() => {
+    if (localDevice) return;
+    let active = true;
+    fetchPublicDevice(id)
+      .then((device) => {
+        if (active) setPublicDevice(device);
+      })
+      .catch(() => {
+        if (active) setPublicDevice(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, localDevice]);
   useEffect(() => {
     if (!qrOpen) return;
-    QRCode.toDataURL(`${window.location.origin}/p/${id}`, { width: 280, margin: 2 })
+    const code = d?.passportCode ?? id;
+    QRCode.toDataURL(`${window.location.origin}/p/${code}`, { width: 280, margin: 2 })
       .then(setQr)
       .catch(() => toast.error("QR belum dapat dibuat"));
+<<<<<<< Updated upstream
   }, [qrOpen, id]);
 
   if (!d) {
+=======
+  }, [qrOpen, id, d?.passportCode]);
+  if (!d)
+>>>>>>> Stashed changes
     return (
       <main className="page-container py-12">
         <EmptyState title="Paspor tidak ditemukan">
@@ -193,23 +225,35 @@ export function DetailScreen({ id }: { id: string }) {
 
   const requestBuy = () => {
     if (!user) {
-      navigate({ to: "/login", search: { next: `/p/${id}` } });
+      navigate({ to: "/login", search: { next: `/p/${d.passportCode ?? d.id}` } });
       return;
     }
     setBuy(true);
   };
+<<<<<<< Updated upstream
 
   const confirmBuy = () => {
+=======
+  const confirmBuy = async () => {
+>>>>>>> Stashed changes
     if (!user || d.status !== "aktif" || owner) return;
     setBusy(true);
-    const orderId = createOrder(id);
-    if (orderId) navigate({ to: "/orders/$id", params: { id: orderId } });
-    setBuy(false);
-    setBusy(false);
-    if (orderId) toast.success("Pesanan dibuat · Dana demo ditahan");
+    try {
+      const orderId = await createOrder(d.id);
+      if (!orderId) {
+        toast.error("Pesanan gagal dibuat. Coba muat ulang lalu ulangi.");
+        return;
+      }
+      setBuy(false);
+      toast.success("Pesanan dibuat · Dana demo ditahan");
+      navigate({ to: "/orders/$id", params: { id: orderId } });
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
+<<<<<<< Updated upstream
     <main className="page-container reading-screen pb-28 pt-5 md:py-8">
       {/* Compact Header */}
       <PageHeading title="Detail perangkat" subtitle={`PD-${d.id.toUpperCase()}`} />
@@ -219,6 +263,16 @@ export function DetailScreen({ id }: { id: string }) {
         <div className="min-w-0">
           {/* Hero Image */}
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-photo sm:aspect-[1.35]">
+=======
+    <main className="page-container reading-screen py-8">
+      <PageHeading
+        title="Detail perangkat"
+        subtitle={`Paspor Digital · ${d.passportCode ?? `PD-${d.id.slice(0, 8).toUpperCase()}`}`}
+      />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,.88fr)] lg:gap-12">
+        <div>
+          <div className="aspect-[1.35] overflow-hidden rounded-xl bg-photo">
+>>>>>>> Stashed changes
             <img src={d.image} alt={d.model} width={1024} height={768} className="photo-image" />
             <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-xs font-semibold backdrop-blur-sm">
               {d.status === "aktif"

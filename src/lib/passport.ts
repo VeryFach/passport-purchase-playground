@@ -38,6 +38,14 @@ export type Device = {
   serviceDue?: string;
   warrantyUntil?: string;
   ownership?: { date: string; from: string; to: string }[];
+  /** Permanent public passport code from the database. */
+  passportCode?: string;
+  /** Active listing id, used for purchase RPC calls. */
+  listingId?: string;
+  /** Backend-computed trust score. Falls back to the local rule engine. */
+  trustScore?: number;
+  /** Persisted estimate snapshot from the listing, if any. */
+  estimateRange?: { mid: number; min: number; max: number; added: number };
 };
 export const rupiah = (n: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -62,6 +70,7 @@ export const recordNames: Record<RecordType, string> = {
   kerusakan: "Catatan kerusakan",
 };
 export function scoreItems(d: Device) {
+  const verified = d.records.filter((r) => r.level >= 3).length;
   return [
     { label: "Identitas lengkap", points: d.serial && d.image ? 20 : 0, max: 20 },
     {
@@ -76,26 +85,30 @@ export function scoreItems(d: Device) {
     },
     {
       label: "Riwayat servis terdokumentasi",
-      points: Math.min(
-        20,
-        d.records.filter(
-          (r) => (r.type === "servis" || r.type === "ganti_part") && r.evidence && r.level >= 2,
-        ).length * 5,
-      ),
-      max: 20,
+      // Flat points: repeated service events do not keep adding score.
+      points: d.records.some(
+        (r) =>
+          (r.type === "servis" || r.type === "ganti_part" || r.type === "kerusakan") &&
+          r.evidence &&
+          r.level >= 2,
+      )
+        ? 15
+        : 0,
+      max: 15,
     },
     {
-      label: "Verifikasi mitra",
-      points: Math.min(20, d.records.filter((r) => r.level >= 3).length * 10),
-      max: 20,
+      label: "Verifikasi mitra (simulasi)",
+      points: Math.min(35, verified * 7),
+      max: 35,
     },
-    { label: "Status kunci bersih", points: d.unlocked ? 10 : 0, max: 10 },
   ];
 }
-export const trustScore = (d: Device) => scoreItems(d).reduce((a, b) => a + b.points, 0);
+export const trustScore = (d: Device) =>
+  typeof d.trustScore === "number" ? d.trustScore : scoreItems(d).reduce((a, b) => a + b.points, 0);
 export const scoreLabel = (score: number) =>
   score >= 70 ? "Terpercaya" : score >= 40 ? "Berdokumen" : "Dasar";
 export function estimate(d: Device) {
+  if (d.estimateRange) return d.estimateRange;
   if (d.basePrice === null) return null;
   const score = trustScore(d);
   const premium = score >= 70 ? 0.06 : score >= 40 ? 0.03 : 0;
@@ -108,6 +121,13 @@ export function estimate(d: Device) {
 }
 export const priceLabel = (price: number, e: { min: number; max: number }) =>
   price < e.min ? "Murah" : price > e.max ? "Mahal" : "Wajar";
+export function conditionToDbValue(
+  condition: Device["condition"],
+): "like_new" | "light_wear" | "damaged" {
+  if (condition === "mulus") return "like_new";
+  if (condition === "rusak") return "damaged";
+  return "light_wear";
+}
 export const purchaseDevice = (d: Device, buyer: string): Device =>
   d.status === "aktif" && d.owner !== buyer ? { ...d, owner: buyer, status: "terjual" } : d;
 export function fileError(file: File) {

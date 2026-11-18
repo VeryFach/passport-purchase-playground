@@ -284,7 +284,7 @@ export function RecordDialog({
 }
 
 export function PassportForm({ id }: { id?: string }) {
-  const { devices, user, addDevice, updateDevice } = useDemo();
+  const { devices, user, saveDevice, requestVerification } = useDemo();
   const existing = devices.find((d) => d.id === id);
   const navigate = useNavigate();
 
@@ -381,7 +381,7 @@ export function PassportForm({ id }: { id?: string }) {
   };
 
   const save = form.handleSubmit(
-    (v) => {
+    async (v) => {
       if (duplicatePassport(devices, v.serial, existing?.id)) {
         form.setError("serial", {
           message: "Serial / IMEI ini sudah terdaftar di paspor lain.",
@@ -397,19 +397,19 @@ export function PassportForm({ id }: { id?: string }) {
         ...preview,
         ...v,
         id: existing?.id || crypto.randomUUID(),
-        basePrice:
-          v.model === "iPhone 13"
-            ? 6000000
-            : v.model === "Galaxy S23"
-              ? 6200000
-              : v.model === "MacBook Air M1"
-                ? 8500000
-                : null,
+        basePrice: existing?.basePrice ?? null,
       };
-      if (existing) updateDevice(existing.id, () => device);
-      else addDevice(device);
+      const saved = await saveDevice(device, existing?.id);
+      if (!saved) {
+        toast.error("Paspor gagal disimpan. Periksa koneksi dan coba lagi.");
+        return;
+      }
       toast.success("Paspor berhasil disimpan");
+<<<<<<< Updated upstream
       navigate({ to: "/devices/$id", params: () => ({ id: device.id }) });
+=======
+      navigate({ to: "/devices/$id", params: { id: saved.id } });
+>>>>>>> Stashed changes
     },
     () => {
       if (!existing) setStep(1);
@@ -882,6 +882,96 @@ export function PassportForm({ id }: { id?: string }) {
                 </Button>
               )}
             </div>
+<<<<<<< Updated upstream
+=======
+            {existing?.records.length ? (
+              <div className="space-y-4">
+                {existing.records.map((r) => (
+                  <div key={r.id} className="flex items-start gap-3 border-b border-border pb-4">
+                    <FileText className="mt-1 size-4 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-medium">{recordNames[r.type]}</h3>
+                        <LevelChip level={r.level} />
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {dateLabel(r.date)} · {r.description}
+                      </p>
+                      {r.level === 2 && (
+                        <Button
+                          variant="link"
+                          type="button"
+                          className="mt-2 h-11 px-0"
+                          onClick={() => {
+                            void requestVerification(r.id);
+                          }}
+                        >
+                          Ajukan verifikasi mitra
+                        </Button>
+                      )}
+                      {r.level >= 3 && (
+                        <Button
+                          variant="link"
+                          type="button"
+                          className="mt-2 h-11 px-0"
+                          onClick={() => {
+                            setCorrection(r);
+                            setCorrectionText(r.description);
+                          }}
+                        >
+                          Koreksi dengan jejak riwayat
+                        </Button>
+                      )}
+                      {r.correctionOf && (
+                        <p className="mt-2 text-xs text-document">Koreksi: {r.correctionReason}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-lg bg-muted p-5 text-xs text-muted-foreground">
+                {existing
+                  ? "Belum ada riwayat. Tambahkan catatan pertama perangkat Anda."
+                  : "Simpan identitas terlebih dahulu untuk menambahkan catatan."}
+              </p>
+            )}
+          </section>
+          {existing && <OwnerTools device={existing} />}
+          <div className="form-sticky-actions mobile-sticky-action sticky grid grid-cols-1 gap-3 border-t border-border bg-background py-4 sm:grid-cols-2 lg:bottom-0">
+            {!existing && step === 1 ? (
+              <Button
+                type="button"
+                className="h-12"
+                onClick={async () => {
+                  const valid = await form.trigger([
+                    "brand",
+                    "model",
+                    "serial",
+                    "year",
+                    "purchasePrice",
+                  ]);
+                  if (valid) setStep(2);
+                }}
+              >
+                Lanjut: kondisi & foto
+                <ArrowRight />
+              </Button>
+            ) : (
+              <Button type="submit" className="h-12 flex-1">
+                <Save />
+                Simpan paspor
+              </Button>
+            )}
+            {existing && (
+              <Button type="button" asChild variant="outline" className="h-12">
+                <Link to="/devices/$id/listing" params={{ id: existing.id }}>
+                  Buat listing
+                  <ArrowRight />
+                </Link>
+              </Button>
+            )}
+>>>>>>> Stashed changes
           </div>
         </form>
 
