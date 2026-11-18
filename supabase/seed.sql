@@ -16,109 +16,120 @@ alter table public.devices disable trigger guard_device_update;
 -- 1. AUTH USERS & PROFILES DUMMY
 -- =====================================================================
 -- Disediakan akun penjual, pembeli, dan 2 mitra resmi terverifikasi.
--- Password demo untuk semua akun: Password123! (bcrypt hash standar Supabase)
+-- Password demo untuk semua akun: Password123!
+-- Hash dibuat real-time pakai crypt() + gen_salt() dari pgcrypto
+-- (pgcrypto sudah aktif otomatis di semua project Supabase)
 -- =====================================================================
 
-insert into auth.users (
-  id,
-  instance_id,
-  aud,
-  role,
-  email,
-  encrypted_password,
-  email_confirmed_at,
-  raw_app_meta_data,
-  raw_user_meta_data,
-  created_at,
-  updated_at
-)
-values
-  -- Akun Penjual 1: Budi Santoso
-  (
-    'a1111111-1111-4111-8111-111111111111',
-    '00000000-0000-0000-0000-000000000000',
-    'authenticated',
-    'authenticated',
-    'budi.santoso@example.com',
-    '$2a$10$wN9aEflMce.o5m3aW5E3x.z/7qH49yXJ9bI1vG5rA4H7lq2rN1k2S',
-    now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"full_name":"Budi Santoso"}'::jsonb,
-    now() - interval '90 days',
-    now()
-  ),
-  -- Akun Pembeli 1: Siti Rahmawati
-  (
-    'a2222222-2222-4222-8222-222222222222',
-    '00000000-0000-0000-0000-000000000000',
-    'authenticated',
-    'authenticated',
-    'siti.rahma@example.com',
-    '$2a$10$wN9aEflMce.o5m3aW5E3x.z/7qH49yXJ9bI1vG5rA4H7lq2rN1k2S',
-    now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"full_name":"Siti Rahmawati"}'::jsonb,
-    now() - interval '80 days',
-    now()
-  ),
-  -- Akun Penjual 2: Andi Wijaya (Gadget Enthusiast)
-  (
-    'a3333333-3333-4333-8333-333333333333',
-    '00000000-0000-0000-0000-000000000000',
-    'authenticated',
-    'authenticated',
-    'andi.wijaya@example.com',
-    '$2a$10$wN9aEflMce.o5m3aW5E3x.z/7qH49yXJ9bI1vG5rA4H7lq2rN1k2S',
-    now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"full_name":"Andi Wijaya"}'::jsonb,
-    now() - interval '60 days',
-    now()
-  ),
-  -- Akun Penjual 3: Reza Pratama (Laptop Specialist)
-  (
-    'a4444444-4444-4444-8444-444444444444',
-    '00000000-0000-0000-0000-000000000000',
-    'authenticated',
-    'authenticated',
-    'reza.pratama@example.com',
-    '$2a$10$wN9aEflMce.o5m3aW5E3x.z/7qH49yXJ9bI1vG5rA4H7lq2rN1k2S',
-    now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"full_name":"Reza Pratama"}'::jsonb,
-    now() - interval '45 days',
-    now()
-  ),
-  -- Akun Mitra 1: iColor Service Center Jakarta
-  (
-    'b1111111-1111-4111-8111-111111111111',
-    '00000000-0000-0000-0000-000000000000',
-    'authenticated',
-    'authenticated',
-    'mitra.jakarta@example.com',
-    '$2a$10$wN9aEflMce.o5m3aW5E3x.z/7qH49yXJ9bI1vG5rA4H7lq2rN1k2S',
-    now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"full_name":"Mitra Servis Resmi Jakarta"}'::jsonb,
-    now() - interval '120 days',
-    now()
-  ),
-  -- Akun Mitra 2: Gadget Care Bandung
-  (
-    'b2222222-2222-4222-8222-222222222222',
-    '00000000-0000-0000-0000-000000000000',
-    'authenticated',
-    'authenticated',
-    'mitra.bandung@example.com',
-    '$2a$10$wN9aEflMce.o5m3aW5E3x.z/7qH49yXJ9bI1vG5rA4H7lq2rN1k2S',
-    now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"full_name":"Mitra Gadget Care Bandung"}'::jsonb,
-    now() - interval '100 days',
-    now()
+-- Fungsi helper agar hash digenerate sekali lalu dipakai semua baris
+do $$
+declare
+  _hash text := crypt('Password123!', gen_salt('bf', 10));
+begin
+  insert into auth.users (
+    id,
+    instance_id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at
   )
-on conflict (id) do update set
-  raw_user_meta_data = excluded.raw_user_meta_data;
+  values
+    -- Akun Penjual 1: Budi Santoso
+    (
+      'a1111111-1111-4111-8111-111111111111',
+      '00000000-0000-0000-0000-000000000000',
+      'authenticated',
+      'authenticated',
+      'budi.santoso@example.com',
+      _hash,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Budi Santoso"}'::jsonb,
+      now() - interval '90 days',
+      now()
+    ),
+    -- Akun Pembeli 1: Siti Rahmawati
+    (
+      'a2222222-2222-4222-8222-222222222222',
+      '00000000-0000-0000-0000-000000000000',
+      'authenticated',
+      'authenticated',
+      'siti.rahma@example.com',
+      _hash,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Siti Rahmawati"}'::jsonb,
+      now() - interval '80 days',
+      now()
+    ),
+    -- Akun Penjual 2: Andi Wijaya (Gadget Enthusiast)
+    (
+      'a3333333-3333-4333-8333-333333333333',
+      '00000000-0000-0000-0000-000000000000',
+      'authenticated',
+      'authenticated',
+      'andi.wijaya@example.com',
+      _hash,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Andi Wijaya"}'::jsonb,
+      now() - interval '60 days',
+      now()
+    ),
+    -- Akun Penjual 3: Reza Pratama (Laptop Specialist)
+    (
+      'a4444444-4444-4444-8444-444444444444',
+      '00000000-0000-0000-0000-000000000000',
+      'authenticated',
+      'authenticated',
+      'reza.pratama@example.com',
+      _hash,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Reza Pratama"}'::jsonb,
+      now() - interval '45 days',
+      now()
+    ),
+    -- Akun Mitra 1: Mitra Servis Resmi Jakarta
+    (
+      'b1111111-1111-4111-8111-111111111111',
+      '00000000-0000-0000-0000-000000000000',
+      'authenticated',
+      'authenticated',
+      'mitra.jakarta@example.com',
+      _hash,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Mitra Servis Resmi Jakarta"}'::jsonb,
+      now() - interval '120 days',
+      now()
+    ),
+    -- Akun Mitra 2: Gadget Care Bandung
+    (
+      'b2222222-2222-4222-8222-222222222222',
+      '00000000-0000-0000-0000-000000000000',
+      'authenticated',
+      'authenticated',
+      'mitra.bandung@example.com',
+      _hash,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Mitra Gadget Care Bandung"}'::jsonb,
+      now() - interval '100 days',
+      now()
+    )
+  on conflict (id) do update set
+    encrypted_password  = excluded.encrypted_password,
+    email_confirmed_at  = coalesce(auth.users.email_confirmed_at, excluded.email_confirmed_at),
+    raw_user_meta_data  = excluded.raw_user_meta_data,
+    updated_at          = now();
+end $$;
 
 -- Update / upsert data profiles
 insert into public.profiles (id, full_name, avatar_url, phone, role)
