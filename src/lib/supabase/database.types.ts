@@ -26,7 +26,6 @@ export interface ProfileRow {
   full_name: string;
   avatar_url: string | null;
   phone: string | null;
-  address: string | null;
   role: ProfileRole;
   created_at: string;
 }

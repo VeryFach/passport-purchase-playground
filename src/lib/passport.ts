@@ -157,12 +157,20 @@ export const passportSchema = z
       });
   });
 export type PassportInput = z.infer<typeof passportSchema>;
+export const todayDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export const historySchema = z.object({
   type: z.enum(["pembelian", "servis", "ganti_part", "baterai", "kerusakan"]),
   date: z
     .string()
     .min(1, "Isi tanggal")
-    .refine((d) => d <= "2026-11-18", "Tanggal tidak boleh di masa depan"),
+    .refine((d) => d <= todayDateString(), "Tanggal tidak boleh di masa depan"),
   description: z
     .string()
     .min(5, "Tulis 5 sampai 300 karakter")

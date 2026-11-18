@@ -15,4 +15,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Pin the Nitro target for self-hosting on Vercel. Inside Lovable's own
+  // pipeline LOVABLE_NITRO_PRESET still wins, so the preview is unaffected.
+  nitro: { preset: "vercel" },
 });
