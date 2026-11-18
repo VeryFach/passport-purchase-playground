@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Perbandingan Figma dan Paspor Digital</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #f2f2f2;
+        color: #111;
+        font:
+          16px/1.5 Arial,
+          sans-serif;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 26px;
+      }
+      p {
+        margin: 0 0 24px;
+        max-width: 900px;
+        color: #555;
+      }
+      .comparison {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 24px;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        margin: 0 0 8px;
+        font-weight: 700;
+      }
+      img {
+        display: block;
+        width: 376px;
+        height: 812px;
+        border: 1px solid #ddd;
+        background: white;
+        object-fit: cover;
+        object-position: top;
+      }
+      .note {
+        max-width: 376px;
+        margin-top: 8px;
+        font-size: 13px;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Beranda mobile · 376 × 812 px</h1>
+    <p>
+      Referensi Figma, kondisi awal, dan hasil implementasi pada ukuran viewport yang sama. Gambar
+      produk, teks, header web, dan font Inter merupakan adaptasi Paspor Digital.
+    </p>
+    <div class="comparison">
+      <figure>
+        <figcaption>Referensi Figma</figcaption>
+        <img src="figma-home.png" alt="Frame home Figma 6:33" />
+        <div class="note">
+          Frame 6:33. Status bar dan gesture bar adalah dekorasi mockup perangkat.
+        </div>
+      </figure>
+      <figure>
+        <figcaption>Sebelum perbaikan</figcaption>
+        <img src="before-home-376.png" alt="Beranda Paspor Digital sebelum perbaikan" />
+      </figure>
+      <figure>
+        <figcaption>Sesudah perbaikan</figcaption>
+        <img src="after-home-376.png" alt="Beranda Paspor Digital setelah perbaikan" />
+      </figure>
+    </div>
+  </body>
+</html>
