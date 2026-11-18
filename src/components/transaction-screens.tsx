@@ -70,7 +70,7 @@ export function OrderScreen({ id }: { id: string }) {
     [error, setError] = useState(""),
     [dispute, setDispute] = useState(false),
     [accepted, setAccepted] = useState(false);
-  if (!o || !user || (user.id !== o.buyer && user.id !== o.seller && user.role !== "admin"))
+  if (!o || !user || (user.id !== o.buyer && user.id !== o.seller))
     return (
       <main className="page-container py-9">
         <EmptyState title="Pesanan tidak tersedia untuk akun ini.">
@@ -239,11 +239,25 @@ export function OrderScreen({ id }: { id: string }) {
       )}
       {o.status === "sengketa" && (
         <section className="border-t border-border py-7">
-          <h2 className="font-semibold">Menunggu peninjauan</h2>
+          <h2 className="font-semibold">Sengketa antar pihak</h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">{o.reason}</p>
           <p className="mt-4 text-sm text-document">
-            Dana demo tetap ditahan. Keputusan dibuat melalui akun Admin Demo.
+            Tidak ada admin pada model C2C. Pembeli dapat membatalkan, atau penjual dapat
+            menyelesaikan setelah kesepakatan. Dana demo tetap ditahan sampai salah satu tindakan.
           </p>
+          {buyer ? (
+            <Button
+              variant="outline"
+              className="mt-5 h-12 w-full"
+              onClick={() => orderAction(id, "refund")}
+            >
+              Batalkan & kembalikan dana demo
+            </Button>
+          ) : (
+            <Button className="mt-5 h-12 w-full" onClick={() => orderAction(id, "release")}>
+              Lepas dana demo & selesaikan
+            </Button>
+          )}
         </section>
       )}
       {o.decision && <p className="rounded-lg bg-muted p-5 text-sm">{o.decision}</p>}
@@ -340,7 +354,7 @@ export function ChatScreen({ id }: { id: string }) {
               <p
                 className={`mb-2 text-xs font-semibold ${m.sender === user.id ? "text-background/70" : "text-muted-foreground"}`}
               >
-                {m.sender === user.id ? "Anda" : m.sender === "seller" ? "Penjual" : "Pembeli"}
+                {m.sender === user.id ? "Anda" : "Lawan transaksi"}
               </p>
               <p className="text-sm leading-6">{m.text}</p>
               {m.offer && <p className="mt-2 font-semibold">Penawaran {rupiah(m.offer)}</p>}

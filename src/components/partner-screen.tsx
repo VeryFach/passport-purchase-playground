@@ -19,7 +19,7 @@ export function PartnerScreen() {
   const queue = pendingVerifications;
   const current = queue.find((item) => item.recordId === selected) || queue[0];
 
-  if (user?.role !== "partner")
+  if (user?.role !== "mitra")
     return (
       <main className="page-container py-12">
         <EmptyState title="Masuk sebagai Mitra untuk memverifikasi catatan.">

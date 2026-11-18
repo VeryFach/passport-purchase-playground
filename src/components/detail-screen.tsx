@@ -152,16 +152,6 @@ export function PriceSuggestion({ device }: { device: Device }) {
 export function DetailScreen({ id }: { id: string }) {
   const { devices, user, createOrder, orders } = useDemo();
   const navigate = useNavigate();
-<<<<<<< Updated upstream
-  const d = devices.find((x) => x.id === id);
-
-  const [buy, setBuy] = useState(false);
-  const [qrOpen, setQrOpen] = useState(false);
-  const [qr, setQr] = useState("");
-  const [evidence, setEvidence] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-=======
   const localDevice = devices.find((x) => x.id === id || x.passportCode === id);
   const [publicDevice, setPublicDevice] = useState<Device | null>(null);
   const d = localDevice ?? publicDevice;
@@ -170,7 +160,6 @@ export function DetailScreen({ id }: { id: string }) {
     [qr, setQr] = useState(""),
     [evidence, setEvidence] = useState<string | null>(null),
     [busy, setBusy] = useState(false);
->>>>>>> Stashed changes
   useEffect(() => {
     if (localDevice) return;
     let active = true;
@@ -191,14 +180,8 @@ export function DetailScreen({ id }: { id: string }) {
     QRCode.toDataURL(`${window.location.origin}/p/${code}`, { width: 280, margin: 2 })
       .then(setQr)
       .catch(() => toast.error("QR belum dapat dibuat"));
-<<<<<<< Updated upstream
-  }, [qrOpen, id]);
-
-  if (!d) {
-=======
   }, [qrOpen, id, d?.passportCode]);
-  if (!d)
->>>>>>> Stashed changes
+  if (!d) {
     return (
       <main className="page-container py-12">
         <EmptyState title="Paspor tidak ditemukan">
@@ -217,7 +200,7 @@ export function DetailScreen({ id }: { id: string }) {
   const partReplacements = d.records.filter((r) => r.type === "ganti_part");
   const hasNonOriginalPart = partReplacements.some((r) => !r.original);
   const hasOngoingOrder = orders.some(
-    (o) => o.deviceId === id && !["selesai", "dikembalikan"].includes(o.status),
+    (o) => o.deviceId === d.id && !["selesai", "dikembalikan"].includes(o.status),
   );
 
   const conditionLabel =
@@ -228,14 +211,13 @@ export function DetailScreen({ id }: { id: string }) {
       navigate({ to: "/login", search: { next: `/p/${d.passportCode ?? d.id}` } });
       return;
     }
+    if (user.role === "mitra") {
+      toast.error("Akun mitra hanya dapat melakukan verifikasi.");
+      return;
+    }
     setBuy(true);
   };
-<<<<<<< Updated upstream
-
-  const confirmBuy = () => {
-=======
   const confirmBuy = async () => {
->>>>>>> Stashed changes
     if (!user || d.status !== "aktif" || owner) return;
     setBusy(true);
     try {
@@ -253,26 +235,15 @@ export function DetailScreen({ id }: { id: string }) {
   };
 
   return (
-<<<<<<< Updated upstream
     <main className="page-container reading-screen pb-28 pt-5 md:py-8">
-      {/* Compact Header */}
-      <PageHeading title="Detail perangkat" subtitle={`PD-${d.id.toUpperCase()}`} />
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,.85fr)] lg:gap-10">
-        {/* KOLOM KIRI */}
-        <div className="min-w-0">
-          {/* Hero Image */}
-          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-photo sm:aspect-[1.35]">
-=======
-    <main className="page-container reading-screen py-8">
       <PageHeading
         title="Detail perangkat"
         subtitle={`Paspor Digital · ${d.passportCode ?? `PD-${d.id.slice(0, 8).toUpperCase()}`}`}
       />
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,.88fr)] lg:gap-12">
-        <div>
-          <div className="aspect-[1.35] overflow-hidden rounded-xl bg-photo">
->>>>>>> Stashed changes
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,.85fr)] lg:gap-10">
+        <div className="min-w-0">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-photo sm:aspect-[1.35]">
             <img src={d.image} alt={d.model} width={1024} height={768} className="photo-image" />
             <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-xs font-semibold backdrop-blur-sm">
               {d.status === "aktif"
@@ -431,7 +402,7 @@ export function DetailScreen({ id }: { id: string }) {
           <div className="hidden rounded-2xl border border-border bg-card p-5 lg:block">
             <ActionButtons
               d={d}
-              id={id}
+              id={d.id}
               owner={owner}
               hasOngoingOrder={hasOngoingOrder}
               requestBuy={requestBuy}
@@ -573,7 +544,7 @@ export function DetailScreen({ id }: { id: string }) {
         <div className="mx-auto max-w-lg">
           <ActionButtons
             d={d}
-            id={id}
+            id={d.id}
             owner={owner}
             hasOngoingOrder={hasOngoingOrder}
             requestBuy={requestBuy}

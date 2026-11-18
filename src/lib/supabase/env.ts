@@ -35,24 +35,30 @@ export type DemoAccountConfig = {
   email: string;
   password: string;
   label: string;
+  role: "user" | "mitra";
 };
 
 export function readDemoAccounts(): DemoAccountConfig[] {
+  const userEmail =
+    import.meta.env["VITE_DEMO_SELLER_EMAIL"] ||
+    import.meta.env["VITE_DEMO_BUYER_EMAIL"] ||
+    "";
+  const userPassword =
+    import.meta.env["VITE_DEMO_SELLER_PASSWORD"] ||
+    import.meta.env["VITE_DEMO_BUYER_PASSWORD"] ||
+    "";
   const accounts: DemoAccountConfig[] = [
     {
-      label: "Penjual",
-      email: import.meta.env["VITE_DEMO_SELLER_EMAIL"] ?? "",
-      password: import.meta.env["VITE_DEMO_SELLER_PASSWORD"] ?? "",
+      label: "Masuk sebagai Pengguna",
+      email: userEmail,
+      password: userPassword,
+      role: "user",
     },
     {
-      label: "Pembeli",
-      email: import.meta.env["VITE_DEMO_BUYER_EMAIL"] ?? "",
-      password: import.meta.env["VITE_DEMO_BUYER_PASSWORD"] ?? "",
-    },
-    {
-      label: "Mitra",
+      label: "Masuk sebagai Mitra",
       email: import.meta.env["VITE_DEMO_MITRA_EMAIL"] ?? "",
       password: import.meta.env["VITE_DEMO_MITRA_PASSWORD"] ?? "",
+      role: "mitra",
     },
   ];
   return accounts.filter((account) => account.email && account.password);

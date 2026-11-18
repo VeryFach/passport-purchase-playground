@@ -11,7 +11,6 @@ import type {
   MarketPriceRow,
   MarketplaceFeedRow,
   PendingVerificationRow,
-  ProfileRole,
   ProfileRow,
   TransactionRow,
 } from "./database.types";

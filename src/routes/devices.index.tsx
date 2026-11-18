@@ -82,6 +82,13 @@ function Devices() {
                       Servis berikutnya · {dateLabel(d.serviceDue)}
                     </p>
                   )}
+                  {d.status !== "terjual" && (
+                    <Button asChild variant="outline" className="mt-3 h-11 w-full">
+                      <Link to="/devices/$id/listing" params={{ id: d.id }}>
+                        Jual perangkat
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>

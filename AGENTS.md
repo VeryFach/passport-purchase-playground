@@ -33,4 +33,5 @@ use the editor.
 - Keep demo device and account state in a browser-safe React context, separate from presentation and pure scoring/pricing functions, so frontend flows work without external services.
 - Use thin TanStack file routes for each screen and shared passport UI modules; this preserves real navigation and independently testable domain rules.
 - Keep comparison limits, identity eligibility, duplicate protection, and transaction state transitions in pure workflow functions, so simulations remain testable and never imply real verification or money movement.
+- Use a C2C role model: account roles are only `user` and `mitra`; buyer/seller are contextual activities, selling requires device ownership, and `mitra` accounts are restricted to verification.
 <!-- AGENT-MEMORY:END -->

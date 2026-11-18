@@ -1,28 +1,32 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, Fingerprint, ShieldCheck, ShoppingBag, Smartphone } from "lucide-react";
+import { ArrowRight, Fingerprint, ShieldCheck, UserRound } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useDemo } from "@/components/demo-provider";
+import { readDemoAccounts } from "@/lib/supabase/env";
 import { pageHead } from "@/lib/metadata";
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { next?: string } =>
     typeof search["next"] === "string" ? { next: search["next"] } : {},
   head: () =>
-    pageHead("Masuk ke akun", "Masuk ke akun demo penjual, pembeli, atau mitra Paspor Digital."),
+    pageHead("Masuk ke akun", "Satu akun untuk membeli dan menjual perangkat Paspor Digital."),
   component: Login,
 });
 function Login() {
-  const { user, signIn, signOut } = useDemo();
+  const { user, signIn, signUp, signOut } = useDemo();
   const navigate = useNavigate();
   const { next } = Route.useSearch();
   const [register, setRegister] = useState(false),
     [name, setName] = useState(""),
     [email, setEmail] = useState(""),
-    [password, setPassword] = useState("");
-  const enter = (role: "seller" | "buyer" | "partner" | "admin", customName?: string) => {
-    signIn(role, customName);
+    [password, setPassword] = useState(""),
+    [busy, setBusy] = useState(false);
+  const demoAccounts = readDemoAccounts();
+
+  const go = (role: "user" | "mitra") => {
     if (next?.startsWith("/chat/")) navigate({ to: "/chat/$id", params: { id: next.slice(6) } });
-    else if (next === "/admin") navigate({ to: "/admin" });
+    else if (next === "/mitra") navigate({ to: "/mitra" });
     else if (next === "/devices") navigate({ to: "/devices" });
     else if (next?.startsWith("/p/")) navigate({ to: "/p/$id", params: { id: next.slice(3) } });
     else if (next?.startsWith("/devices/") && next.endsWith("/listing"))
@@ -30,18 +34,27 @@ function Login() {
     else if (next === "/devices/new") navigate({ to: "/devices/new" });
     else if (next?.startsWith("/devices/"))
       navigate({ to: "/devices/$id", params: { id: next.slice(9) } });
-    else
-      navigate({
-        to:
-          role === "admin"
-            ? "/admin"
-            : role === "partner"
-              ? "/mitra"
-              : role === "seller"
-                ? "/devices"
-                : "/",
-      });
+    else navigate({ to: role === "mitra" ? "/mitra" : "/" });
   };
+
+  const submit = async (role: "user" | "mitra") => {
+    setBusy(true);
+    try {
+      if (register) {
+        await signUp(name || email.split("@")[0] || "Pengguna", email, password);
+        toast.success("Akun dibuat. Anda dapat membeli dan menjual dengan akun ini.");
+      } else {
+        await signIn(email, password);
+        toast.success("Berhasil masuk.");
+      }
+      go(role);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Autentikasi gagal.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <main className="page-container reading-screen max-w-md py-12">
       <Link to="/" className="mb-8 inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -49,12 +62,12 @@ function Login() {
       </Link>
       <Fingerprint className="mb-5 size-11 text-brand" />
       <h1 className="text-[28px] font-semibold">
-        {user ? "Akun demo Anda" : register ? "Buat akun baru" : "Selamat datang kembali"}
+        {user ? "Akun Anda" : register ? "Buat akun baru" : "Selamat datang kembali"}
       </h1>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">
         {user
-          ? `${user.name} · ${user.role === "partner" ? "Mitra" : user.role === "seller" ? "Penjual" : "Pembeli"}`
-          : "Satu akun untuk menyimpan riwayat dan menemukan perangkat terpercaya."}
+          ? `${user.name} · ${user.role === "mitra" ? "Mitra verifikasi" : "Pengguna"}`
+          : "Satu akun untuk membeli dan menjual perangkat. Tidak perlu mendaftar toko."}
       </p>
       {user && (
         <Button className="mt-5" variant="outline" onClick={signOut}>
@@ -80,7 +93,7 @@ function Login() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          enter("seller", name || email.split("@")[0]);
+          void submit("user");
         }}
         className="space-y-4"
       >
@@ -117,40 +130,56 @@ function Login() {
             autoComplete={register ? "new-password" : "current-password"}
           />
         </label>
-        <Button type="submit" className="h-11 w-full">
-          {register ? "Buat akun demo" : "Masuk demo"}
+        <Button type="submit" className="h-11 w-full" disabled={busy}>
+          {register ? "Buat akun" : "Masuk"}
           <ArrowRight />
         </Button>
       </form>
       <p className="mt-3 text-center text-[11px] leading-5 text-muted-foreground">
-        Akun simulasi, bukan autentikasi sungguhan. Jangan gunakan password asli.
+        Akun pengguna baru otomatis berperan <strong>user</strong> dan dapat langsung membeli
+        maupun menjual. Peran mitra hanya diberikan oleh pengelola.
       </p>
-      <div className="my-7 flex items-center gap-3 text-xs text-muted-foreground">
-        <div className="h-px flex-1 bg-border" />
-        atau masuk cepat
-        <div className="h-px flex-1 bg-border" />
-      </div>
-      <div className="space-y-3">
-        {[
-          { role: "seller" as const, label: "Penjual", Icon: Smartphone },
-          { role: "buyer" as const, label: "Pembeli", Icon: ShoppingBag },
-          { role: "partner" as const, label: "Mitra", Icon: ShieldCheck },
-          { role: "admin" as const, label: "Admin", Icon: ShieldCheck },
-        ].map(({ role, label, Icon }) => (
-          <Button
-            key={role}
-            variant="outline"
-            className="h-12 w-full justify-between bg-card shadow-none"
-            onClick={() => enter(role)}
-          >
-            <span className="flex items-center gap-3">
-              <Icon />
-              Masuk cepat: {label}
-            </span>
-            <ArrowRight />
-          </Button>
-        ))}
-      </div>
+      {demoAccounts.length > 0 && (
+        <>
+          <div className="my-7 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="h-px flex-1 bg-border" />
+            atau masuk cepat
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          <div className="space-y-3">
+            {demoAccounts.map((account) => {
+              const Icon = account.role === "mitra" ? ShieldCheck : UserRound;
+              return (
+                <Button
+                  key={account.email}
+                  variant="outline"
+                  className="h-12 w-full justify-between bg-card shadow-none"
+                  disabled={busy}
+                  onClick={() => {
+                    setEmail(account.email);
+                    setPassword(account.password);
+                    setBusy(true);
+                    signIn(account.email, account.password)
+                      .then(() => go(account.role))
+                      .catch((error: unknown) =>
+                        toast.error(
+                          error instanceof Error ? error.message : "Autentikasi gagal.",
+                        ),
+                      )
+                      .finally(() => setBusy(false));
+                  }}
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon />
+                    {account.label}
+                  </span>
+                  <ArrowRight />
+                </Button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </main>
   );
 }

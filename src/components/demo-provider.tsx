@@ -3,7 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { conditionToDbValue, type Device, type HistoryRecord } from "@/lib/passport";
-import type { AuditEntry, Inspection, Message, Order } from "@/lib/workflows";
+import {
+  advanceOrder,
+  type AuditEntry,
+  type Inspection,
+  type Message,
+  type Order,
+} from "@/lib/workflows";
 import {
   fetchWorkspace,
   recordTitle,
@@ -15,7 +21,7 @@ import { createClient } from "@/lib/supabase/client";
 import { readSupabaseBrowserEnv } from "@/lib/supabase/env";
 import { errorMessage } from "@/lib/supabase/errors";
 
-type UserRole = "seller" | "buyer" | "partner" | "admin";
+type UserRole = "user" | "mitra";
 type User = { id: string; name: string; role: UserRole };
 type ProfileState = { phone: string; address: string };
 
@@ -182,15 +188,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     await queryClient.invalidateQueries({ queryKey: ["workspace"] });
   }, [queryClient]);
 
+  const isMitra = workspaceQuery.data?.profile?.role === "mitra";
+
   const user = useMemo<User | null>(() => {
     if (!userId) return null;
-    const isMitra = workspaceQuery.data?.profile?.role === "mitra";
     return {
       id: userId,
       name: profileName,
-      role: isMitra ? "partner" : "seller",
+      role: isMitra ? "mitra" : "user",
     };
-  }, [userId, profileName, workspaceQuery.data?.profile?.role]);
+  }, [userId, profileName, isMitra]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -233,6 +240,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const createOrder = useCallback(
     async (deviceId: string): Promise<string | null> => {
+      if (isMitra) {
+        toast.error("Akun mitra hanya dapat melakukan verifikasi.");
+        return null;
+      }
       const device = devices.find((item) => item.id === deviceId);
       if (!device?.listingId) {
         toast.error("Listing tidak tersedia untuk dibeli.");
@@ -251,7 +262,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    [devices, refresh],
+    [devices, refresh, isMitra],
   );
 
   const persistDeviceUpdate = useCallback(
@@ -350,6 +361,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const updateDevice = useCallback(
     (id: string, fn: (device: Device) => Device) => {
+      if (isMitra) return;
       setDevices((currentDevices) => {
         const current = currentDevices.find((device) => device.id === id);
         if (!current) return currentDevices;
@@ -358,11 +370,15 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         return currentDevices.map((device) => (device.id === id ? next : device));
       });
     },
-    [persistDeviceUpdate],
+    [persistDeviceUpdate, isMitra],
   );
 
   const addDevice = useCallback(
     (device: Device) => {
+      if (isMitra) {
+        toast.error("Akun mitra hanya dapat melakukan verifikasi.");
+        return;
+      }
       setDevices((currentDevices) => [device, ...currentDevices]);
       if (userId) {
         void saveNewDevice(device, userId)
@@ -370,12 +386,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           .catch((error) => toast.error(errorMessage(error, "Gagal menyimpan paspor.")));
       }
     },
-    [userId, refresh],
+    [userId, refresh, isMitra],
   );
 
   const saveDevice = useCallback(
     async (device: Device, existingId?: string): Promise<Device | null> => {
       if (!userId) return null;
+      if (isMitra) {
+        toast.error("Akun mitra hanya dapat melakukan verifikasi.");
+        return null;
+      }
       if (existingId) {
         const current = devices.find((item) => item.id === existingId);
         if (!current) return null;
@@ -393,7 +413,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    [userId, devices, persistDeviceUpdate, refresh],
+    [userId, devices, persistDeviceUpdate, refresh, isMitra],
   );
 
   const setProfile = useCallback(
@@ -414,6 +434,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const requestVerification = useCallback(
     async (recordId: string) => {
+      if (isMitra) {
+        toast.error("Akun mitra tidak dapat mengajukan verifikasi.");
+        return;
+      }
       try {
         const supabase = createClient();
         const { error } = await supabase.rpc("request_verification", { p_history_id: recordId });
@@ -424,11 +448,15 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         toast.error(errorMessage(error, "Gagal mengajukan verifikasi."));
       }
     },
-    [refresh],
+    [refresh, isMitra],
   );
 
   const reviewVerification = useCallback(
     async (recordId: string, approve: boolean, note?: string) => {
+      if (!isMitra) {
+        toast.error("Hanya akun mitra yang dapat meninjau verifikasi.");
+        return;
+      }
       try {
         const supabase = createClient();
         const { error } = await supabase.rpc("review_verification", {
@@ -443,11 +471,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         toast.error(errorMessage(error, "Gagal memproses verifikasi."));
       }
     },
-    [refresh],
+    [refresh, isMitra],
   );
 
   const withdrawListing = useCallback(
     async (listingId: string) => {
+      if (isMitra) return;
       try {
         const supabase = createClient();
         const { error } = await supabase.rpc("withdraw_listing", { p_listing_id: listingId });
@@ -457,7 +486,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         toast.error(errorMessage(error, "Gagal menarik listing."));
       }
     },
-    [refresh],
+    [refresh, isMitra],
   );
 
   const log = useCallback(
@@ -503,10 +532,17 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     },
     orders,
     createOrder,
-    orderAction: (id, action) => {
+    orderAction: (id, action, details) => {
+      if (!userId || isMitra) {
+        toast.error("Akun mitra hanya dapat melakukan verifikasi.");
+        return;
+      }
       const order = orders.find((item) => item.id === id);
-      if (order) log(`Aksi transaksi ${action} (simulasi)`, order.deviceId);
-      toast.info("Transaksi simulasi sudah selesai dan tidak memakai escrow.");
+      if (!order) return;
+      const next = advanceOrder(order, userId, action, details);
+      if (next === order) return;
+      setOrders((items) => items.map((item) => (item.id === id ? next : item)));
+      log(`Aksi transaksi ${action} (simulasi)`, order.deviceId);
     },
     messages,
     sendMessage: (id, text, offer) => {
