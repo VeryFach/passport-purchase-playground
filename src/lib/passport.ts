@@ -46,6 +46,7 @@ export type Device = {
   trustScore?: number;
   /** Persisted estimate snapshot from the listing, if any. */
   estimateRange?: { mid: number; min: number; max: number; added: number };
+  estimateExplanation?: { source: "llm" | "deterministic_template"; summary: string; reasons: string[]; warnings?: string[] };
 };
 export const rupiah = (n: number) =>
   new Intl.NumberFormat("id-ID", {

@@ -1,6 +1,24 @@
 # Implementation Status — Paspor Digital MVP Audit & Remediation
 
-Last Updated: 2026-11-19 (Session 03 — MVP Scope Cleanup Completed)
+Last Updated: 2026-11-19 (Session 04 — Pricing & AI Integration Completed)
+
+---
+
+## Session 04 — Pricing & AI Integration Checkpoint
+
+Status: implementation complete; the SQL package must be applied through the Lovable/Supabase SQL Editor because repository policy does not allow hand-editing migration history.
+
+- Added [`supabase/session04_pricing.sql`](../supabase/session04_pricing.sql), an idempotent package with 18 labelled demo `market_prices` rows, deterministic age interpolation, condition handling, persisted estimate range/premium/snapshot, and `refresh_listing_estimate`/`save_listing_explanation` RPCs.
+- Added server-only `explainPrice` TanStack Server Function. It calls the Lovable AI gateway only when `LOVABLE_API_KEY` is present, validates structured JSON, enforces the ±15% guardrail, and returns a deterministic explanation fallback otherwise.
+- Listing publication now refreshes and persists pricing explanations without reporting false success when optional pricing/AI RPCs are unavailable.
+- Marketplace data maps persisted explanations into the existing pricing UI; template output is labelled as deterministic rather than AI-generated.
+- Unsupported models and future purchase dates produce no estimate; missing battery/physical data and ages above three years are explicitly represented in warnings (older ages clamp to the three-year reference point).
+
+### Session 04 verification
+
+- `node node_modules/typescript/bin/tsc --noEmit` — passed.
+- `node node_modules/vitest/vitest.mjs run` — 4 files, 27 tests passed.
+- `node node_modules/vite/bin/vite.js build` — passed (Vercel/Nitro output generated; first attempt hit a transient Windows EBUSY lock and passed on retry).
 
 ---
 
@@ -135,8 +153,8 @@ During audit and implementation, a discrepancy between the canonical PRD and cli
 | **FR-11** | QR Code Paspor | **REMEDIATED (PENDING REMOTE DEPLOY)** | `public_passport` RPC implemented in `003` for external scans. |
 | **FR-12** | AI OCR Receipt | **NOT_IMPLEMENTED** | Optional feature out of MVP scope. |
 | **FR-13** | Anomaly Detection | **VERIFIED** | Rule-based anomalies functional. |
-| **FR-14** | Estimated Price Formula | **PARTIAL** | Formula functional; reference seed data pending (`TASK-P1-1`). |
-| **FR-15** | AI Price Explanation | **MOCK_ONLY** | Real AI integration deferred to Session 04 (`TASK-P2-4`). |
+| **FR-14** | Estimated Price Formula | **REMEDIATED (PENDING SQL APPLY)** | 18 labelled reference models, interpolated ages, condition factors, explicit unsupported/out-of-range handling, and persisted estimates are implemented in `session04_pricing.sql`. |
+| **FR-15** | AI Price Explanation | **REMEDIATED (PENDING SERVER KEY/SQL APPLY)** | TanStack server function uses the Lovable AI gateway with structured JSON and ±15% fallback guardrail; deterministic output is labelled when unavailable. |
 | **FR-16** | Price Badges & Premium | **VERIFIED** | Murah / Wajar / Mahal badges and passport premium rendered. |
 | **Compare** | Compare Devices | **VERIFIED** | Transient frontend state, up to 3 devices. |
 

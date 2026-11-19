@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { initialDevices } from "@/lib/demo-data";
-import { conditionToDbValue, type Device, type HistoryRecord } from "@/lib/passport";
+import { conditionToDbValue, estimate, type Device, type HistoryRecord } from "@/lib/passport";
+import { explainPrice } from "@/lib/pricing-ai.server";
 import type { Order } from "@/lib/workflows";
 import {
   fetchMarketplaceFeed,
@@ -572,6 +573,33 @@ async function publishListingFor(device: Device, userId: string): Promise<void> 
     });
     if (estimateRefresh.error) {
       console.warn("[paspor] listing estimate refresh unavailable", estimateRefresh.error.message);
+      return;
+    }
+    const range = estimate(device);
+    if (range) {
+      try {
+        const explanation = await explainPrice({
+          data: {
+            model: `${device.brand} ${device.model}`,
+            condition: device.condition,
+            battery: device.battery,
+            trustScore: device.trustScore ?? 0,
+            min: range.min,
+            mid: range.mid,
+            max: range.max,
+            passportPremium: range.added,
+          },
+        });
+        const { error: explanationError } = await supabase.rpc("save_listing_explanation", {
+          p_listing_id: data as string,
+          p_explanation: explanation,
+        });
+        if (explanationError) {
+          console.warn("[paspor] AI explanation persistence unavailable", explanationError.message);
+        }
+      } catch (explanationError) {
+        console.warn("[paspor] AI explanation unavailable", explanationError);
+      }
     }
   }
 }

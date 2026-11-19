@@ -136,6 +136,17 @@ export function PriceSuggestion({ device }: { device: Device }) {
               <span>Nilai tambah paspor +{rupiah(e.added)}</span>
             </li>
           </ul>
+          {device.estimateExplanation && (
+            <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+              <p>{device.estimateExplanation.summary}</p>
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                {device.estimateExplanation.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+              </ul>
+              {device.estimateExplanation.source === "deterministic_template" && (
+                <p className="mt-2 text-[10px]">Penjelasan otomatis berbasis rumus; AI tidak tersedia.</p>
+              )}
+            </div>
+          )}
 
           <p className="mt-3 border-t border-border/60 pt-2.5 text-[11px] text-muted-foreground">
             *Estimasi indikatif dari data contoh, bukan harga pasar real-time.
