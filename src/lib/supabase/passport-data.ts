@@ -379,7 +379,16 @@ export async function createSignedEvidenceMap(paths: string[]): Promise<Record<s
   const unique = [...new Set(paths.filter(Boolean))];
   if (!unique.length) return {};
   const supabase = createClient();
-  const { data } = await supabase.storage.from("device-evidence").createSignedUrls(unique, 3600);
+  const { data, error } = await supabase.storage
+    .from("device-evidence")
+    .createSignedUrls(unique, 3600);
+  const failedCount = (data ?? []).filter((entry) => !entry.signedUrl).length;
+  if (error || failedCount) {
+    console.warn("[paspor] evidence signing failed", {
+      error: error?.message,
+      failedCount,
+    });
+  }
   const map: Record<string, string> = {};
   for (const entry of data ?? []) {
     if (entry.path && entry.signedUrl) map[entry.path] = entry.signedUrl;

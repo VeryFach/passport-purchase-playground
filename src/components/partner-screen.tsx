@@ -124,8 +124,8 @@ export function PartnerScreen() {
               </Button>
             ) : (
               <p className="mb-6 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
-                Bukti belum dapat diakses. Pastikan kebijakan penyimpanan migrasi 002 sudah
-                dijalankan.
+                Bukti belum dapat diakses. Pastikan kebijakan Storage pada migration 007 sudah
+                dijalankan dan file bukti masih tersedia.
               </p>
             )}
             <label className="mb-5 flex items-start gap-3 text-sm leading-6">
