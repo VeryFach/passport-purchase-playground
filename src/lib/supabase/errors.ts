@@ -18,6 +18,13 @@ export function errorMessage(error: unknown, fallback = "Terjadi kesalahan."): s
   if (!error) return fallback;
   if (typeof error === "string") return error;
   const candidate = error as SupabaseErrorLike;
+  const databaseMessage = candidate.message ?? "";
+  if (/listings_one_active/i.test(databaseMessage)) {
+    return "Perangkat ini sudah memiliki listing aktif. Tarik listing lama sebelum menayangkan yang baru.";
+  }
+  if (/devices_(serial|imei)_unique|serial_unique|imei_unique/i.test(databaseMessage)) {
+    return "Data sudah ada. Periksa kembali nomor serial / IMEI.";
+  }
   if (candidate.code && FRIENDLY[candidate.code]) return FRIENDLY[candidate.code];
   if (candidate.message) return candidate.message;
   if (error instanceof Error) return error.message;

@@ -42,7 +42,11 @@ export const explainPrice = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const input = requestSchema.parse(data);
     const apiKey = serverEnv("GEMINI_API_KEY");
-    if (!apiKey) return fallback(input);
+    console.info("[paspor] Gemini pricing explanation requested", { configured: Boolean(apiKey) });
+    if (!apiKey) {
+      console.warn("[paspor] GEMINI_API_KEY is not available to the server runtime");
+      return fallback(input);
+    }
     try {
       const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
@@ -66,17 +70,27 @@ export const explainPrice = createServerFn({ method: "POST" })
         candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
       };
       const content = payload.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!content) return fallback(input);
+      if (!content) {
+        console.warn("[paspor] Gemini returned no text candidate");
+        return fallback(input);
+      }
       const parsed = JSON.parse(content) as { summary?: unknown; reasons?: unknown; min?: unknown; max?: unknown };
       const min = Number(parsed.min);
       const max = Number(parsed.max);
       const lowerBound = input.min * 0.85;
       const upperBound = input.max * 1.15;
-      if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max < min || min < lowerBound || max > upperBound) return fallback(input);
+      if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max < min || min < lowerBound || max > upperBound) {
+        console.warn("[paspor] Gemini response failed pricing guardrail");
+        return fallback(input);
+      }
       const reasons = Array.isArray(parsed.reasons) ? parsed.reasons.filter((item): item is string => typeof item === "string").slice(0, 3) : [];
-      if (!reasons.length || typeof parsed.summary !== "string") return fallback(input);
+      if (!reasons.length || typeof parsed.summary !== "string") {
+        console.warn("[paspor] Gemini response did not match explanation schema");
+        return fallback(input);
+      }
       return { source: "llm", summary: parsed.summary, reasons, min: Math.round(min), max: Math.round(max) };
-    } catch {
+    } catch (error) {
+      console.warn("[paspor] Gemini explanation exception", error instanceof Error ? error.message : error);
       return fallback(input);
     }
   });

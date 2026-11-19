@@ -27,7 +27,7 @@ export function ListingScreen({ id }: { id: string }) {
       </main>
     );
   const e = estimate(d);
-  const publish = (event: React.FormEvent) => {
+  const publish = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!canList(d)) {
       setError(
@@ -39,7 +39,8 @@ export function ListingScreen({ id }: { id: string }) {
       setError("Isi harga minta lebih dari 0");
       return;
     }
-    updateDevice(id, (current) => ({ ...current, price: Number(price), status: "aktif" }));
+    const published = await updateDevice(id, (current) => ({ ...current, price: Number(price), status: "aktif" }));
+    if (!published) return;
     toast.success("Listing berhasil ditayangkan");
     navigate({ to: "/p/$id", params: { id } });
   };

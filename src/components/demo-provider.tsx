@@ -31,7 +31,7 @@ type DemoState = {
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
-  updateDevice: (id: string, fn: (device: Device) => Device) => void;
+  updateDevice: (id: string, fn: (device: Device) => Device) => Promise<boolean>;
   addDevice: (device: Device) => void;
   saveDevice: (device: Device, existingId?: string) => Promise<Device | null>;
   saved: string[];
@@ -290,13 +290,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const persistDeviceUpdate = useCallback(
     async (current: Device, next: Device) => {
-      if (!userId) return;
+      if (!userId) return false;
       const supabase = createClient();
       try {
         if (next.status === "aktif" && current.status !== "aktif") {
           await publishListingFor(next, userId);
           await refresh();
-          return;
+          return true;
         }
 
         if (next.status === "draf" && current.status === "aktif" && current.listingId) {
@@ -375,23 +375,32 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         }
 
         await refresh();
+        return true;
       } catch (error) {
         toast.error(errorMessage(error, "Gagal menyimpan perubahan perangkat."));
+        return false;
       }
     },
     [userId, refresh],
   );
 
   const updateDevice = useCallback(
-    (id: string, fn: (device: Device) => Device) => {
-      if (isMitra) return;
+    (id: string, fn: (device: Device) => Device): Promise<boolean> => {
+      if (isMitra) return Promise.resolve(false);
+      let persistence = Promise.resolve(false);
       setDevices((currentDevices) => {
         const current = currentDevices.find((device) => device.id === id);
         if (!current) return currentDevices;
         const next = fn(current);
-        void persistDeviceUpdate(current, next);
+        persistence = persistDeviceUpdate(current, next);
+        void persistence.then((saved) => {
+          if (!saved) {
+            setDevices((items) => items.map((item) => (item.id === id ? current : item)));
+          }
+        });
         return currentDevices.map((device) => (device.id === id ? next : device));
       });
+      return persistence;
     },
     [persistDeviceUpdate, isMitra],
   );
@@ -424,7 +433,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         if (!current) return null;
         const next = { ...device, id: existingId };
         setDevices((items) => items.map((item) => (item.id === existingId ? next : item)));
-        void persistDeviceUpdate(current, next);
+        void persistDeviceUpdate(current, next).then((saved) => {
+          if (!saved) {
+            setDevices((items) => items.map((item) => (item.id === existingId ? current : item)));
+          }
+        });
         return next;
       }
       try {
