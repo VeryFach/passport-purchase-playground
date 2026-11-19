@@ -211,7 +211,7 @@ Usia di antara titik data dihitung dengan interpolasi sederhana.
 | Frontend | Next.js (React) + Tailwind, responsif untuk ponsel |
 | Backend + DB + Auth + Storage | Supabase (Postgres, Auth, Storage, Row Level Security) |
 | QR code | Library `qrcode` |
-| Estimasi harga + penjelasan AI | Rumus deterministik pada RPC Supabase + TanStack Start Server Function ke Lovable AI gateway dengan output JSON; `LOVABLE_API_KEY` hanya di environment server |
+| Estimasi harga + penjelasan AI | Rumus deterministik pada RPC Supabase + TanStack Start Server Function ke Google Gemini dengan output JSON; `GEMINI_API_KEY` hanya di environment server |
 | OCR/anomali (opsional) | Panggilan API ke model AI dengan input foto nota |
 | Deploy | Vercel |
 

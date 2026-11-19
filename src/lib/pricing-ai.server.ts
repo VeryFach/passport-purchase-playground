@@ -33,32 +33,39 @@ const fallback = (input: z.infer<typeof requestSchema>): PriceExplanationResult 
 });
 
 function serverEnv(name: string): string {
-  return typeof process !== "undefined" ? process.env[name] ?? "" : "";
+  const runtimeValue = typeof process !== "undefined" ? process.env[name] ?? "" : "";
+  return runtimeValue || import.meta.env[name] || "";
 }
 
 export const explainPrice = createServerFn({ method: "POST" })
   .validator(requestSchema)
   .handler(async ({ data }) => {
     const input = requestSchema.parse(data);
-    const apiKey = serverEnv("LOVABLE_API_KEY");
+    const apiKey = serverEnv("GEMINI_API_KEY");
     if (!apiKey) return fallback(input);
     try {
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          temperature: 0.2,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: "Jelaskan harga perangkat dalam JSON: summary string, reasons array maksimal 3 string, min number, max number. Jangan mengarang harga dasar." },
-            { role: "user", content: JSON.stringify(input) },
-          ],
+          systemInstruction: {
+            parts: [{ text: "Jelaskan harga perangkat dalam JSON: summary string, reasons array maksimal 3 string, min number, max number. Jangan mengarang harga dasar." }],
+          },
+          contents: [{ role: "user", parts: [{ text: JSON.stringify(input) }] }],
+          generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
         }),
-      });
-      if (!response.ok) return fallback(input);
-      const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
-      const content = payload.choices?.[0]?.message?.content;
+        },
+      );
+      if (!response.ok) {
+        console.warn("[paspor] Gemini request failed", response.status, response.statusText);
+        return fallback(input);
+      }
+      const payload = (await response.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const content = payload.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!content) return fallback(input);
       const parsed = JSON.parse(content) as { summary?: unknown; reasons?: unknown; min?: unknown; max?: unknown };
       const min = Number(parsed.min);

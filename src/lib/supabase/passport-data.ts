@@ -379,17 +379,18 @@ export async function fetchMarketPrices(): Promise<MarketPriceRow[]> {
 
 async function fetchFeed(): Promise<MarketplaceFeedRow[]> {
   const supabase = createClient();
-  const v2 = await supabase.rpc("marketplace_feed_v2");
-  if (!v2.error) return (v2.data as MarketplaceFeedRow[] | null) ?? [];
-  const v1 = await supabase.rpc("marketplace_feed");
-  if (v1.error) {
-    if (!isMissingSchemaError(v1.error)) {
+  // `marketplace_feed` is the canonical RPC in the applied base schema.
+  // Do not probe the optional v2 name: a missing RPC produces a noisy 404
+  // in the browser console even though the existing feed works correctly.
+  const feed = await supabase.rpc("marketplace_feed");
+  if (feed.error) {
+    if (!isMissingSchemaError(feed.error)) {
       // Surface unexpected errors to the caller's console without breaking the page.
-      console.warn("[paspor] marketplace feed unavailable", v1.error.message);
+      console.warn("[paspor] marketplace feed unavailable", feed.error.message);
     }
     return [];
   }
-  return (v1.data as MarketplaceFeedRow[] | null) ?? [];
+  return (feed.data as MarketplaceFeedRow[] | null) ?? [];
 }
 
 export async function fetchMarketplaceFeed(): Promise<Device[]> {

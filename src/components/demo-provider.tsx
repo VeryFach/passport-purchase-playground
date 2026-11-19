@@ -573,7 +573,6 @@ async function publishListingFor(device: Device, userId: string): Promise<void> 
     });
     if (estimateRefresh.error) {
       console.warn("[paspor] listing estimate refresh unavailable", estimateRefresh.error.message);
-      return;
     }
     const range = estimate(device);
     if (range) {

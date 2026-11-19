@@ -221,10 +221,6 @@ export interface Database {
         Args: { p_listing_id?: string | null };
         Returns: MarketplaceFeedRow[];
       };
-      marketplace_feed_v2: {
-        Args: { p_listing_id?: string | null };
-        Returns: MarketplaceFeedRow[];
-      };
       public_passport: {
         Args: { p_key: string };
         Returns: PublicPassportRow[];
