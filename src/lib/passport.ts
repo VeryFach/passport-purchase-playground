@@ -7,7 +7,7 @@ export type HistoryRecord = {
   date: string;
   description: string;
   evidence: string | null;
-  level: 1 | 2 | 3 | 4;
+  level: 1 | 2 | 3;
   original: boolean;
   verifiedBy?: string | undefined;
   correctionOf?: string;

@@ -9,7 +9,7 @@ import { dateLabel, maskedSerial } from "@/lib/passport";
 import { cn } from "@/lib/utils";
 
 export function PartnerScreen() {
-  const { user, pendingVerifications, reviewVerification, inspections, devices } = useDemo();
+  const { user, pendingVerifications, reviewVerification } = useDemo();
   const [selected, setSelected] = useState(""),
     [confirm, setConfirm] = useState(false),
     [rejectOpen, setRejectOpen] = useState(false),
@@ -58,17 +58,6 @@ export function PartnerScreen() {
         <ShieldCheck className="size-4" />
         Verifikasi simulasi oleh akun Mitra Demo, bukan service center resmi.
       </p>
-      {inspections.length > 0 && (
-        <section className="mb-8 border-y border-border py-5">
-          <h2 className="font-semibold">Jadwal inspeksi demo</h2>
-          {inspections.map((i) => (
-            <p key={i.id} className="mt-3 text-sm">
-              {devices.find((d) => d.id === i.deviceId)?.model || i.deviceId} ·{" "}
-              {dateLabel(i.date)} · {i.location}
-            </p>
-          ))}
-        </section>
-      )}
       {queue.length && current ? (
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">
           <section className="rounded-lg border border-border p-4">

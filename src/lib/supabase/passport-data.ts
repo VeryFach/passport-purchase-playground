@@ -170,7 +170,7 @@ export function historyRowToRecord(
     date: row.event_date,
     description: row.description,
     evidence: row.evidence_url ? (signedUrls[row.evidence_url] ?? null) : null,
-    level: (row.level >= 1 && row.level <= 4 ? row.level : 1) as HistoryRecord["level"],
+    level: (row.level >= 1 && row.level <= 3 ? row.level : 1) as HistoryRecord["level"],
     original: row.part_original ?? true,
     verifiedBy: row.verification_status === "verified" ? "Mitra (simulasi)" : undefined,
     ...(typeof details["correctionOf"] === "string"
@@ -459,7 +459,6 @@ export async function fetchWorkspace(userId: string): Promise<WorkspaceData> {
       amount: num(tx.total_price),
       status: "selesai" as const,
       createdAt: tx.created_at,
-      decision: "Transaksi simulasi selesai. Tidak ada dana yang dipindahkan.",
     } satisfies Order;
   });
 

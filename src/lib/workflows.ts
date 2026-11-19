@@ -1,5 +1,5 @@
 import type { Device, HistoryRecord } from "./passport";
-export type OrderStatus = "ditahan" | "ditinjau" | "sengketa" | "selesai" | "dikembalikan";
+export type OrderStatus = "selesai";
 export type Order = {
   id: string;
   deviceId: string;
@@ -8,34 +8,7 @@ export type Order = {
   amount: number;
   status: OrderStatus;
   createdAt: string;
-  reviewStartedAt?: string;
-  reason?: string;
-  evidence?: string;
-  decision?: string;
-  rating?: number;
 };
-export type Message = {
-  id: string;
-  deviceId: string;
-  sender: string;
-  text: string;
-  offer?: number;
-};
-export type Inspection = {
-  id: string;
-  deviceId: string;
-  location: string;
-  date: string;
-  status: "menunggu" | "selesai";
-};
-export type AuditEntry = {
-  id: string;
-  date: string;
-  actor: string;
-  action: string;
-  deviceId: string;
-};
-export const REVIEW_HOURS = 48;
 export const canCompare = (ids: string[], id: string) => ids.includes(id) || ids.length < 3;
 export const duplicatePassport = (devices: Device[], serial: string, excludeId?: string) =>
   devices.some(
@@ -69,43 +42,6 @@ export function correctRecord(
     verifiedBy: undefined,
   };
 }
-export function advanceOrder(
-  order: Order,
-  actor: string,
-  action: "received" | "accept" | "dispute" | "refund" | "release",
-  details?: { reason?: string; evidence?: string },
-  now = new Date().toISOString(),
-): Order {
-  if (action === "received" && actor === order.buyer && order.status === "ditahan")
-    return { ...order, status: "ditinjau", reviewStartedAt: now };
-  if (action === "accept" && actor === order.buyer && order.status === "ditinjau")
-    return { ...order, status: "selesai" };
-  if (
-    action === "dispute" &&
-    actor === order.buyer &&
-    order.status === "ditinjau" &&
-    details?.reason &&
-    details.evidence
-  )
-    return { ...order, status: "sengketa", reason: details.reason, evidence: details.evidence };
-  if (actor === order.buyer && order.status === "sengketa" && action === "refund")
-    return {
-      ...order,
-      status: "dikembalikan",
-      decision: "Pembeli membatalkan; dana demo dikembalikan (simulasi).",
-    };
-  if (actor === order.seller && order.status === "sengketa" && action === "release")
-    return {
-      ...order,
-      status: "selesai",
-      decision: "Penjual menyelesaikan; dana demo dilepas (simulasi).",
-    };
-  return order;
-}
 export const orderLabels: Record<OrderStatus, string> = {
-  ditahan: "Dana ditahan",
-  ditinjau: "Masa tinjau",
-  sengketa: "Dalam sengketa",
-  selesai: "Selesai",
-  dikembalikan: "Dana dikembalikan",
+  selesai: "Pembelian selesai",
 };

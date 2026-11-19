@@ -285,7 +285,7 @@ export function RecordDialog({
 }
 
 export function PassportForm({ id }: { id?: string }) {
-  const { devices, user, saveDevice, requestVerification } = useDemo();
+  const { devices, user, saveDevice, updateDevice, requestVerification } = useDemo();
   const existing = devices.find((d) => d.id === id);
   const navigate = useNavigate();
 

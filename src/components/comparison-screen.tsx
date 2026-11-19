@@ -68,10 +68,10 @@ export function ComparisonScreen() {
                         `${d.records.filter((r) => r.level >= 2).length} catatan berdokumen`,
                       ],
                       [
-                        "Inspeksi",
-                        d.records.some((r) => r.level === 4)
-                          ? "Ada hasil inspeksi demo"
-                          : "Belum terinspeksi",
+                        "Verifikasi mitra",
+                        d.records.some((r) => r.level === 3)
+                          ? "Ada catatan diverifikasi mitra"
+                          : "Belum ada verifikasi mitra",
                       ],
                       [
                         "Harga wajar",

@@ -39,11 +39,34 @@ export type DemoAccountConfig = {
 };
 
 export function readDemoAccounts(): DemoAccountConfig[] {
+  const configuredAccounts = import.meta.env["VITE_DEMO_ACCOUNTS"];
+  if (configuredAccounts) {
+    try {
+      const parsed: unknown = JSON.parse(configuredAccounts);
+      if (Array.isArray(parsed)) {
+        const accounts = parsed.filter(
+          (account): account is DemoAccountConfig =>
+            Boolean(account) &&
+            typeof account === "object" &&
+            typeof (account as DemoAccountConfig).email === "string" &&
+            typeof (account as DemoAccountConfig).password === "string" &&
+            typeof (account as DemoAccountConfig).label === "string" &&
+            ((account as DemoAccountConfig).role === "user" ||
+              (account as DemoAccountConfig).role === "mitra"),
+        );
+        if (accounts.length) return accounts;
+      }
+    } catch {
+      // Fall back to the individual variables below when JSON is malformed.
+    }
+  }
   const userEmail =
+    import.meta.env["VITE_DEMO_USER_EMAIL"] ||
     import.meta.env["VITE_DEMO_SELLER_EMAIL"] ||
     import.meta.env["VITE_DEMO_BUYER_EMAIL"] ||
     "";
   const userPassword =
+    import.meta.env["VITE_DEMO_USER_PASSWORD"] ||
     import.meta.env["VITE_DEMO_SELLER_PASSWORD"] ||
     import.meta.env["VITE_DEMO_BUYER_PASSWORD"] ||
     "";

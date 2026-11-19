@@ -1,6 +1,49 @@
 # Implementation Status — Paspor Digital MVP Audit & Remediation
 
-Last Updated: 2026-11-19 (Session 01 — Database Remediation Completed)
+Last Updated: 2026-11-19 (Session 03 — MVP Scope Cleanup Completed)
+
+---
+
+## Session 02 — Core Workflow Fixes Checkpoint
+
+Status: complete in commit `8c18de1`, with a follow-up guard and RPC-error handling
+verified during the current audit.
+
+- P0-4: current owners can withdraw an active listing from Devices and the passport detail screen through `withdraw_listing`; failed RPCs are surfaced without claiming success.
+- P1-2: account profile persistence is limited to supported contact fields; the removed address input has no `profiles.address` dependency.
+- P1-4: purchase feedback explicitly describes an immediate simulated ownership transfer, with no escrow lifecycle implied.
+- P1-5: signup consumes an immediate Supabase session when available and attempts password sign-in for projects with confirmation disabled. The dashboard-level “Confirm email” setting remains external and cannot be verified from this repository.
+- P2-2: marketplace feed uses a public `marketplace_feed` query independently from authenticated workspace loading, so anonymous browsing remains available.
+- P2-3: history validation and date inputs use the current local date rather than a hardcoded cutoff.
+- Duplicate signup submissions are guarded while authentication is in flight. Optional listing-estimate RPC failures are logged and do not make a successful listing publication appear to fail.
+
+### Session 02 verification
+
+- `node node_modules/typescript/bin/tsc --noEmit` — passed.
+- `node node_modules/vitest/vitest.mjs run` — passed (23 tests).
+- `node node_modules/vite/bin/vite.js build` — passed.
+- `node node_modules/eslint/bin/eslint.js src --rule 'prettier/prettier: off'` — passed with the repository's existing Fast Refresh warnings.
+
+---
+
+## Session 03 — MVP Scope Cleanup Checkpoint
+
+Status: complete for the requested frontend/domain cleanup.
+
+- Removed Level 4/inspector terminology from frontend types, fixtures, chips, filters, comparison, and Supabase row mapping. Verification is limited to L1 (claim), L2 (documented), and L3 (Mitra verified).
+- Removed chat route and UI, inspection booking state/UI, escrow/review/dispute/refund/fund-release transitions, rating controls, and the obsolete admin route. The remaining order model represents only a completed simulated transaction.
+- Preserved the two account roles (`user`, `mitra`), contextual buying/selling for `user`, Mitra verification, Compare (maximum three), completed purchases, and ownership transfer through the existing Supabase purchase flow.
+- Updated requirements and roadmap wording to describe direct simulated purchase and transfer, and to keep removed features explicitly outside the MVP.
+- No tables or migrations were added or edited. Existing Supabase migrations remain the database source of truth and must be managed through Lovable per repository instructions.
+
+### Session 03 verification
+
+- `node node_modules/typescript/bin/tsc --noEmit` — passed.
+- `node node_modules/vitest/vitest.mjs run src/test/workflows.test.ts src/test/passport.test.ts src/test/app-routing.test.tsx` — 3 files, 23 tests passed.
+- Remaining mentions of chat, inspection booking, escrow lifecycle, disputes, refunds, ratings, and inspector/Level 4 are only explanatory out-of-scope statements in `docs/requirement.md`.
+- `node node_modules/vite/bin/vite.js build` — passed (Vercel/Nitro production output generated).
+- `node node_modules/eslint/bin/eslint.js .` — failed on repository-wide CRLF/Prettier line-ending formatting (2,849 auto-fixable formatting errors and 7 existing warnings); no TypeScript or rule violations were reported. No mass reformat was applied because it is outside this cleanup scope.
+- `node node_modules/eslint/bin/eslint.js src --rule 'prettier/prettier: off'` — passed with 7 existing Fast Refresh warnings and no errors.
 
 ---
 
@@ -79,14 +122,14 @@ During audit and implementation, a discrepancy between the canonical PRD and cli
 
 | ID | Feature | Classification | Remediation Status |
 | :--- | :--- | :--- | :--- |
-| **FR-01** | Register & Login | **PARTIAL** | Email/password works. Pending Supabase Auth setting to disable email confirmation (`FINDING-05`). |
+| **FR-01** | Register & Login | **REMEDIATED (PENDING REMOTE SETTING)** | Session-aware signup and duplicate-submit protection are implemented; Supabase Dashboard email confirmation must be disabled for immediate access. |
 | **FR-02** | Create Passport | **VERIFIED** | Zod validation, unique serial/IMEI indices, UUID `passport_code`. |
 | **FR-03** | Add History Records | **VERIFIED** | Uploads to `device-evidence`, trigger validation, ownership enforcement. |
 | **FR-04** | Trust Levels (L1-L3) | **VERIFIED** | Migration 003 refines check constraint; L3 strictly assigned by Mitra review. |
 | **FR-05** | Mitra Verification | **REMEDIATED (PENDING REMOTE DEPLOY)** | `request_verification`, `pending_verifications`, and `review_verification` RPCs and scoped storage policy implemented in `003`. |
 | **FR-06** | Trust Score Calculation | **REMEDIATED (PENDING REMOTE DEPLOY)** | Authoritative DB engine, trigger synchronization, and backfill implemented in `003`. |
-| **FR-07** | Publish Listing | **PARTIAL** | `publish_listing` secured in `002`; withdrawal UI button pending (`TASK-P0-6`). |
-| **FR-08** | Browse Marketplace | **PARTIAL** | Anonymous feed decoupling pending (`TASK-P2-1`). |
+| **FR-07** | Publish Listing | **VERIFIED** | `publish_listing` is secured in `002`; current owners can withdraw active listings through the UI and `withdraw_listing`. |
+| **FR-08** | Browse Marketplace | **VERIFIED** | Public marketplace feed is loaded independently of authenticated workspace data. |
 | **FR-09** | Detail Screen | **VERIFIED** | Specs, masked serial, timeline, level chips, price labels. |
 | **FR-10** | Simulated Purchase | **VERIFIED** | Atomic `buy_listing` RPC; `003` adds anti-stale pending request invalidation. |
 | **FR-11** | QR Code Paspor | **REMEDIATED (PENDING REMOTE DEPLOY)** | `public_passport` RPC implemented in `003` for external scans. |

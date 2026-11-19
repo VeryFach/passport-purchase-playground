@@ -5,7 +5,7 @@ export const Route = createFileRoute("/orders/$id")({
   head: () =>
     pageHead(
       "Detail pesanan",
-      "Periksa perangkat, konfirmasi kesesuaian, atau ajukan sengketa pada transaksi demo.",
+      "Lihat pembelian simulasi yang selesai dan paspor yang berpindah pemilik.",
     ),
   component: OrderDetail,
 });
