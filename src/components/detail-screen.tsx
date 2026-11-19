@@ -719,7 +719,10 @@ function ActionButtons({
       <Button
         className="h-11 w-full"
         onClick={requestBuy}
-        disabled={d.status !== "aktif" || !canList(d)}
+        // Seller eligibility is checked when publishing. Buyers only need an
+        // active listing; public feed rows intentionally do not expose the
+        // owner's private identity-check fields.
+        disabled={d.status !== "aktif"}
       >
         <span>Beli sekarang</span>
         <ArrowRight className="size-4" />
