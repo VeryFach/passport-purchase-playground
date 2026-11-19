@@ -24,7 +24,7 @@ alter table public.devices disable trigger guard_device_update;
 -- Fungsi helper agar hash digenerate sekali lalu dipakai semua baris
 do $$
 declare
-  _hash text := crypt('Password123!', gen_salt('bf', 10));
+  _hash text := extensions.crypt('Password123!', extensions.gen_salt('bf', 10));
 begin
   insert into auth.users (
     id,
@@ -37,7 +37,15 @@ begin
     raw_app_meta_data,
     raw_user_meta_data,
     created_at,
-    updated_at
+    updated_at,
+    confirmation_token,
+    recovery_token,
+    email_change,
+    email_change_token_new,
+    email_change_token_current,
+    phone_change,
+    phone_change_token,
+    reauthentication_token
   )
   values
     -- Akun Penjual 1: Budi Santoso
@@ -52,7 +60,8 @@ begin
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"Budi Santoso"}'::jsonb,
       now() - interval '90 days',
-      now()
+      now(),
+      '', '', '', '', '', '', '', ''
     ),
     -- Akun Pembeli 1: Siti Rahmawati
     (
@@ -66,7 +75,8 @@ begin
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"Siti Rahmawati"}'::jsonb,
       now() - interval '80 days',
-      now()
+      now(),
+      '', '', '', '', '', '', '', ''
     ),
     -- Akun Penjual 2: Andi Wijaya (Gadget Enthusiast)
     (
@@ -80,7 +90,8 @@ begin
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"Andi Wijaya"}'::jsonb,
       now() - interval '60 days',
-      now()
+      now(),
+      '', '', '', '', '', '', '', ''
     ),
     -- Akun Penjual 3: Reza Pratama (Laptop Specialist)
     (
@@ -94,7 +105,8 @@ begin
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"Reza Pratama"}'::jsonb,
       now() - interval '45 days',
-      now()
+      now(),
+      '', '', '', '', '', '', '', ''
     ),
     -- Akun Mitra 1: Mitra Servis Resmi Jakarta
     (
@@ -108,7 +120,8 @@ begin
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"Mitra Servis Resmi Jakarta"}'::jsonb,
       now() - interval '120 days',
-      now()
+      now(),
+      '', '', '', '', '', '', '', ''
     ),
     -- Akun Mitra 2: Gadget Care Bandung
     (
@@ -122,13 +135,22 @@ begin
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"Mitra Gadget Care Bandung"}'::jsonb,
       now() - interval '100 days',
-      now()
+      now(),
+      '', '', '', '', '', '', '', ''
     )
   on conflict (id) do update set
-    encrypted_password  = excluded.encrypted_password,
-    email_confirmed_at  = coalesce(auth.users.email_confirmed_at, excluded.email_confirmed_at),
-    raw_user_meta_data  = excluded.raw_user_meta_data,
-    updated_at          = now();
+    encrypted_password         = excluded.encrypted_password,
+    email_confirmed_at         = coalesce(auth.users.email_confirmed_at, excluded.email_confirmed_at),
+    raw_user_meta_data         = excluded.raw_user_meta_data,
+    confirmation_token         = coalesce(auth.users.confirmation_token, ''),
+    recovery_token             = coalesce(auth.users.recovery_token, ''),
+    email_change               = coalesce(auth.users.email_change, ''),
+    email_change_token_new     = coalesce(auth.users.email_change_token_new, ''),
+    email_change_token_current = coalesce(auth.users.email_change_token_current, ''),
+    phone_change               = coalesce(auth.users.phone_change, ''),
+    phone_change_token         = coalesce(auth.users.phone_change_token, ''),
+    reauthentication_token     = coalesce(auth.users.reauthentication_token, ''),
+    updated_at                 = now();
 end $$;
 
 -- Update / upsert data profiles
@@ -866,6 +888,135 @@ values
     null,
     null,
     null,
+    null,
+    true
+  ),
+
+  -- =====================================================================
+  -- 6 RIWAYAT MENUNGGU VERIFIKASI MITRA (PENDING REVIEW)
+  -- =====================================================================
+  -- 1. Samsung Galaxy S24 Ultra (Budi Santoso) - Verifikasi Nota SEIN
+  (
+    'da111111-1111-4111-8111-111111111111',
+    'c9999999-9999-4999-8999-999999999999',
+    'a1111111-1111-4111-8111-111111111111',
+    'purchase',
+    'Verifikasi Nota Pembelian Resmi SEIN di Samsung Store',
+    'Permohonan verifikasi nota pembelian resmi SEIN Tunjungan Plaza Surabaya senilai Rp21.999.000. Invoice terlampir lengkap dengan stempel lunas dan serial matching.',
+    '2024-03-01',
+    'a1111111-1111-4111-8111-111111111111/nota-s24u-sein.jpg',
+    '{"retailer":"Samsung Store Surabaya","warranty":"1 Year SEIN Official"}'::jsonb,
+    2,
+    true,
+    'pending',
+    null,
+    null,
+    now() - interval '2 days',
+    null,
+    true
+  ),
+
+  -- 2. MacBook Air M2 (Reza Pratama) - Uji Kapasitas Baterai Real 97%
+  (
+    'da222222-2222-4222-8222-222222222222',
+    'ceeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    'a4444444-4444-4444-8444-444444444444',
+    'battery',
+    'Pemeriksaan Siklus Baterai & Kapasitas Real 97%',
+    'Laporan diagnostik battery report Apple: cycle count 112, battery health 97%. Mohon mitra memvalidasi kesehatan sel baterai sebelum tayang di marketplace.',
+    '2024-04-10',
+    'a4444444-4444-4444-8444-444444444444/diagnostik-baterai-m2.jpg',
+    '{"cycleCount":112,"healthPercent":97,"fullChargeCapacity":4680}'::jsonb,
+    2,
+    true,
+    'pending',
+    null,
+    null,
+    now() - interval '3 days',
+    null,
+    true
+  ),
+
+  -- 3. iPhone 14 Pro (Andi Wijaya) - Penggantian Layar Original di Mitra Resmi
+  (
+    'da333333-3333-4333-8333-333333333333',
+    'c4444444-4444-4444-8444-444444444444',
+    'a3333333-3333-4333-8333-333333333333',
+    'part_replacement',
+    'Penggantian Layar Original di Apple Authorized Service Provider',
+    'Layar diganti resmi di Mitra Apple karena goresan dalam. True Tone dan sensor ambient light aktif normal, part serial tercatat di sistem Apple.',
+    '2024-03-25',
+    'a3333333-3333-4333-8333-333333333333/service-layar-mitra-apple.jpg',
+    '{"partType":"display","serviceProvider":"Mitra Apple Authorized","trueToneActive":true}'::jsonb,
+    2,
+    true,
+    'pending',
+    null,
+    null,
+    now() - interval '4 days',
+    null,
+    true
+  ),
+
+  -- 4. ThinkPad X1 Carbon Gen 9 (Reza Pratama) - Pembersihan Motherboard & Repaste
+  (
+    'da444444-4444-4444-8444-444444444444',
+    'c7777777-7777-4777-8777-777777777777',
+    'a4444444-4444-4444-8444-444444444444',
+    'service',
+    'Inspeksi Motherboard & Repaste Thermal Grizzly',
+    'Perawatan berkala di service center Lenovo: motherboard bersih bebas korosi, fan hening, suhu full load maks 69C. Dokumen servis onsite terlampir.',
+    '2024-04-02',
+    'a4444444-4444-4444-8444-444444444444/invoice-servis-lenovo-premier.jpg',
+    '{"thermalPaste":"Thermal Grizzly Kryonaut","fanCondition":"Clean","temperatureStressTest":"69C"}'::jsonb,
+    2,
+    true,
+    'pending',
+    null,
+    null,
+    now() - interval '5 days',
+    null,
+    true
+  ),
+
+  -- 5. ASUS ROG Zephyrus G14 (Andi Wijaya) - Klaim Garansi Resmi ASUS & Nota Toko
+  (
+    'da555555-5555-4555-8555-555555555555',
+    'cbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    'a3333333-3333-4333-8333-333333333333',
+    'purchase',
+    'Klaim Garansi Resmi ASUS Service Center & Nota Asli',
+    'Nota toko resmi ASUS Store Malang dan kartu garansi VIP Perfect Warranty 2 tahun. Kartu garansi dan bukti registrasi MyASUS diunggah.',
+    '2023-06-20',
+    'a3333333-3333-4333-8333-333333333333/nota-asus-zephyrus-g14.jpg',
+    '{"warrantyType":"ASUS Perfect Warranty 2 Tahun","myAsusRegistered":true}'::jsonb,
+    2,
+    true,
+    'pending',
+    null,
+    null,
+    now() - interval '6 days',
+    null,
+    true
+  ),
+
+  -- 6. Samsung Galaxy A54 (Budi Santoso) - Uji Tekanan Kedap Air IP67 & Port
+  (
+    'da666666-6666-4666-8666-666666666666',
+    'c6666666-6666-4666-8666-666666666666',
+    'a1111111-1111-4111-8111-111111111111',
+    'service',
+    'Pengecekan Sertifikasi Kedap Air IP67 & Port Type-C',
+    'Uji tekanan barometer internal untuk segel tahan air IP67 dan port charging normal 25W Fast Charging. Hasil print out diagnostik disertakan.',
+    '2024-04-15',
+    'a1111111-1111-4111-8111-111111111111/uji-diagnostik-ip67-a54.jpg',
+    '{"ip67SealTested":true,"portVoltage":"9.0V 2.77A Super Fast Charging"}'::jsonb,
+    2,
+    true,
+    'pending',
+    null,
+    null,
+    now() - interval '7 days',
     null,
     true
   )
