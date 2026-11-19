@@ -3,14 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { initialDevices } from "@/lib/demo-data";
-import { conditionToDbValue, type Device, type HistoryRecord } from "@/lib/passport";
-import {
-  advanceOrder,
-  type AuditEntry,
-  type Inspection,
-  type Message,
-  type Order,
-} from "@/lib/workflows";
+import { conditionToDbValue, estimate, type Device, type HistoryRecord } from "@/lib/passport";
+import { explainPrice } from "@/lib/pricing-ai.server";
+import type { Order } from "@/lib/workflows";
 import {
   fetchMarketplaceFeed,
   fetchWorkspace,
@@ -45,19 +40,8 @@ type DemoState = {
   toggleCompare: (id: string) => void;
   orders: Order[];
   createOrder: (id: string) => Promise<string | null>;
-  orderAction: (
-    id: string,
-    action: "received" | "accept" | "dispute" | "refund" | "release",
-    details?: { reason?: string; evidence?: string },
-  ) => void;
-  messages: Message[];
-  sendMessage: (id: string, text: string, offer?: number) => void;
-  inspections: Inspection[];
-  bookInspection: (id: string, location: string, date: string) => void;
-  audit: AuditEntry[];
   profile: ProfileState;
   setProfile: (profile: ProfileState) => void;
-  rateOrder: (id: string, rating: number) => void;
   requestVerification: (recordId: string) => Promise<void>;
   reviewVerification: (recordId: string, approve: boolean, note?: string) => Promise<void>;
   pendingVerifications: Array<{
@@ -73,7 +57,7 @@ type DemoState = {
     evidence: string | null;
     requestedAt: string | null;
   }>;
-  withdrawListing: (listingId: string) => Promise<void>;
+  withdrawListing: (listingId: string) => Promise<boolean>;
 };
 
 const DemoContext = createContext<DemoState | null>(null);
@@ -94,9 +78,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   );
   const [saved, setSaved] = useState<string[]>([]);
   const [comparison, setComparison] = useState<string[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inspections, setInspections] = useState<Inspection[]>([]);
-  const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [profileName, setProfileName] = useState("Pengguna");
 
   const feedQuery = useQuery({
@@ -276,9 +257,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setOrders([]);
     setSaved([]);
     setComparison([]);
-    setMessages([]);
-    setInspections([]);
-    setAudit([]);
     setProfileState(EMPTY_PROFILE);
     await queryClient.invalidateQueries({ queryKey: ["marketplace_feed"] });
   }, [configured, queryClient]);
@@ -536,21 +514,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     [refresh, isMitra],
   );
 
-  const log = useCallback(
-    (action: string, deviceId: string) =>
-      setAudit((entries) => [
-        {
-          id: crypto.randomUUID(),
-          date: new Date().toISOString(),
-          actor: profileName,
-          action,
-          deviceId,
-        },
-        ...entries,
-      ]),
-    [profileName],
-  );
-
   const value: DemoState = {
     devices,
     user,
@@ -579,49 +542,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     },
     orders,
     createOrder,
-    orderAction: (id, action, details) => {
-      if (!userId || isMitra) {
-        toast.error("Akun mitra hanya dapat melakukan verifikasi.");
-        return;
-      }
-      const order = orders.find((item) => item.id === id);
-      if (!order) return;
-      const next = advanceOrder(order, userId, action, details);
-      if (next === order) return;
-      setOrders((items) => items.map((item) => (item.id === id ? next : item)));
-      log(`Aksi transaksi ${action} (simulasi)`, order.deviceId);
-    },
-    messages,
-    sendMessage: (id, text, offer) => {
-      if (!user || !text.trim()) return;
-      setMessages((items) => [
-        ...items,
-        {
-          id: crypto.randomUUID(),
-          deviceId: id,
-          sender: user.id,
-          text,
-          ...(offer ? { offer } : {}),
-        },
-      ]);
-      log("Pesan dikirim (demo lokal)", id);
-    },
-    inspections,
-    bookInspection: (id, location, date) => {
-      if (!user) return;
-      setInspections((items) => [
-        ...items,
-        { id: crypto.randomUUID(), deviceId: id, location, date, status: "menunggu" },
-      ]);
-      log("Inspeksi demo dijadwalkan", id);
-    },
-    audit,
     profile,
     setProfile,
-    rateOrder: (id, rating) =>
-      setOrders((items) =>
-        items.map((order) => (order.id === id ? { ...order, rating } : order)),
-      ),
     requestVerification,
     reviewVerification,
     pendingVerifications,
@@ -644,8 +566,41 @@ async function publishListingFor(device: Device, userId: string): Promise<void> 
   });
   if (error) throw error;
   if (data) {
-    // refresh_listing_estimate is deferred to Session 04; swallow PGRST202 silently.
-    await supabase.rpc("refresh_listing_estimate", { p_listing_id: data as string });
+    // Pricing refresh is optional for this MVP. A failed RPC must not make a
+    // successfully-created listing look like a failed publication.
+    const estimateRefresh = await supabase.rpc("refresh_listing_estimate", {
+      p_listing_id: data as string,
+    });
+    if (estimateRefresh.error) {
+      console.warn("[paspor] listing estimate refresh unavailable", estimateRefresh.error.message);
+      return;
+    }
+    const range = estimate(device);
+    if (range) {
+      try {
+        const explanation = await explainPrice({
+          data: {
+            model: `${device.brand} ${device.model}`,
+            condition: device.condition,
+            battery: device.battery,
+            trustScore: device.trustScore ?? 0,
+            min: range.min,
+            mid: range.mid,
+            max: range.max,
+            passportPremium: range.added,
+          },
+        });
+        const { error: explanationError } = await supabase.rpc("save_listing_explanation", {
+          p_listing_id: data as string,
+          p_explanation: explanation,
+        });
+        if (explanationError) {
+          console.warn("[paspor] AI explanation persistence unavailable", explanationError.message);
+        }
+      } catch (explanationError) {
+        console.warn("[paspor] AI explanation unavailable", explanationError);
+      }
+    }
   }
 }
 

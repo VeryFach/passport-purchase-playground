@@ -1,11 +1,11 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowRight, Fingerprint, ShieldCheck, UserRound } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { useDemo } from "@/components/demo-provider";
-import { readDemoAccounts } from "@/lib/supabase/env";
+import { Button } from "@/components/ui/button";
 import { pageHead } from "@/lib/metadata";
+import { readDemoAccounts } from "@/lib/supabase/env";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Fingerprint, ShieldCheck, UserRound } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { next?: string } =>
     typeof search["next"] === "string" ? { next: search["next"] } : {},
@@ -25,8 +25,7 @@ function Login() {
   const demoAccounts = readDemoAccounts();
 
   const go = (role: "user" | "mitra") => {
-    if (next?.startsWith("/chat/")) navigate({ to: "/chat/$id", params: { id: next.slice(6) } });
-    else if (next === "/mitra") navigate({ to: "/mitra" });
+    if (next === "/mitra") navigate({ to: "/mitra" });
     else if (next === "/devices") navigate({ to: "/devices" });
     else if (next?.startsWith("/p/")) navigate({ to: "/p/$id", params: { id: next.slice(3) } });
     else if (next?.startsWith("/devices/") && next.endsWith("/listing"))
@@ -38,6 +37,7 @@ function Login() {
   };
 
   const submit = async (role: "user" | "mitra") => {
+    if (busy) return;
     setBusy(true);
     try {
       if (register) {

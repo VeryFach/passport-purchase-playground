@@ -6,6 +6,6 @@
 
 ## Pengalaman VPC dan problem framing
 - [x] Tampilan ponsel lebih lapang, laporan kondisi yang mudah dinilai, simpan dan bandingkan maksimal 3 perangkat.
-- [x] Dompet perangkat, pengingat, inspeksi simulasi, dan privasi saat jual.
-- [x] Chat dan penawaran simulasi, pesanan dengan dana ditahan, masa tinjau, transfer, dan sengketa.
-- [x] Profil, portal peninjauan demo, aturan integritas, dan uji alur ponsel/desktop.
+- [x] Perangkat Saya, pengingat, dan privasi saat jual.
+- [x] Pembelian simulasi selesai langsung dengan transfer kepemilikan paspor.
+- [x] Profil, verifikasi mitra L1–L3, aturan integritas, dan uji alur ponsel/desktop.

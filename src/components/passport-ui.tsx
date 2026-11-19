@@ -267,7 +267,7 @@ export function ScoreRing({ score, large = false }: { score: number; large?: boo
     </div>
   );
 }
-export function LevelChip({ level }: { level: 1 | 2 | 3 | 4 }) {
+export function LevelChip({ level }: { level: 1 | 2 | 3 }) {
   const Icon = level >= 3 ? ShieldCheck : level === 2 ? FileText : Quote;
   return (
     <span
@@ -281,10 +281,8 @@ export function LevelChip({ level }: { level: 1 | 2 | 3 | 4 }) {
       )}
     >
       <Icon className="size-3.5" />
-      {level === 4
-        ? "Terinspeksi"
-        : level === 3
-          ? "Terdiagnosis"
+      {level === 3
+          ? "Diverifikasi mitra"
           : level === 2
             ? "Berdokumen"
             : "Klaim penjual"}
@@ -368,7 +366,7 @@ export function PassportCard({ device, owned = false }: { device: Device; owned?
                 {scoreLabel(score)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {verified > 0 ? `${verified} catatan tingkat L3/L4` : "Belum ada verifikasi mitra"}
+                {verified > 0 ? `${verified} catatan diverifikasi mitra` : "Belum ada verifikasi mitra"}
               </p>
             </div>
             {verified > 0 ? (

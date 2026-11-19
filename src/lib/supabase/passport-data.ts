@@ -15,6 +15,7 @@ import type {
   TransactionRow,
 } from "./database.types";
 import { isMissingSchemaError } from "./errors";
+import { interpolateMarketPrice } from "@/lib/pricing";
 
 const DB_TO_RECORD_TYPE: Record<HistoryType, RecordType | null> = {
   purchase: "pembelian",
@@ -110,15 +111,7 @@ function ageOf(purchaseDate: string | null | undefined): number {
 
 export function usedPriceForAge(market: MarketPriceRow | undefined, age: number): number | null {
   if (!market) return null;
-  const prices = [
-    nnum(market.used_price_1y),
-    nnum(market.used_price_2y),
-    nnum(market.used_price_3y),
-  ];
-  if (age <= 1) return prices[0] ?? prices[1] ?? prices[2];
-  if (age === 2) return prices[1] ?? prices[0] ?? prices[2];
-  if (age >= 3) return prices[2] ?? prices[1] ?? prices[0];
-  return prices[0] ?? prices[1] ?? prices[2];
+  return interpolateMarketPrice(market, age);
 }
 
 export function findMarketPrice(
@@ -157,6 +150,17 @@ function estimateFromListing(listing: ListingRow | undefined) {
   };
 }
 
+function explanationFromListing(listing: ListingRow | undefined): Device["estimateExplanation"] {
+  const explanation = listing?.ai_explanation;
+  if (!explanation || typeof explanation.summary !== "string") return undefined;
+  const source = explanation.source === "llm" ? "llm" : "deterministic_template";
+  const reasons = Array.isArray(explanation.reasons)
+    ? explanation.reasons.filter((item): item is string => typeof item === "string").slice(0, 3)
+    : [];
+  return { source, summary: explanation.summary, reasons,
+    ...(Array.isArray(explanation.warnings) ? { warnings: explanation.warnings.filter((item): item is string => typeof item === "string") } : {}) };
+}
+
 export function historyRowToRecord(
   row: HistoryRecordRow,
   signedUrls: Record<string, string>,
@@ -170,7 +174,7 @@ export function historyRowToRecord(
     date: row.event_date,
     description: row.description,
     evidence: row.evidence_url ? (signedUrls[row.evidence_url] ?? null) : null,
-    level: (row.level >= 1 && row.level <= 4 ? row.level : 1) as HistoryRecord["level"],
+    level: (row.level >= 1 && row.level <= 3 ? row.level : 1) as HistoryRecord["level"],
     original: row.part_original ?? true,
     verifiedBy: row.verification_status === "verified" ? "Mitra (simulasi)" : undefined,
     ...(typeof details["correctionOf"] === "string"
@@ -269,6 +273,7 @@ function deviceFromOwnedRow(
     listingId: listing?.status === "active" ? listing.id : undefined,
     trustScore: row.trust_score > 0 ? row.trust_score : undefined,
     estimateRange: estimateFromListing(listing),
+    estimateExplanation: explanationFromListing(listing),
   };
 }
 
@@ -317,6 +322,16 @@ function deviceFromFeedRow(row: MarketplaceFeedRow, markets: MarketPriceRow[]): 
     estimateRange:
       min !== null && max !== null
         ? { min, max, mid: (min + max) / 2, added: num(passport.passport_premium) }
+        : undefined,
+    estimateExplanation:
+      row.passport.ai_explanation && typeof row.passport.ai_explanation.summary === "string"
+        ? {
+            source: row.passport.ai_explanation.source === "llm" ? "llm" : "deterministic_template",
+            summary: row.passport.ai_explanation.summary,
+            reasons: Array.isArray(row.passport.ai_explanation.reasons)
+              ? row.passport.ai_explanation.reasons.filter((item): item is string => typeof item === "string").slice(0, 3)
+              : [],
+          }
         : undefined,
   };
 }
@@ -459,7 +474,6 @@ export async function fetchWorkspace(userId: string): Promise<WorkspaceData> {
       amount: num(tx.total_price),
       status: "selesai" as const,
       createdAt: tx.created_at,
-      decision: "Transaksi simulasi selesai. Tidak ada dana yang dipindahkan.",
     } satisfies Order;
   });
 

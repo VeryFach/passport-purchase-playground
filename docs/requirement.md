@@ -43,11 +43,11 @@
 
 | Fitur | Cara di MVP |
 |---|---|
-| Escrow dan pembayaran | Tombol "Beli" langsung mengubah status, tanpa uang sungguhan |
+| Pembelian simulasi | Tombol "Beli" langsung menyelesaikan transaksi dan memindahkan kepemilikan paspor; tanpa pembayaran atau penahanan dana |
 | Cek IMEI dan status kunci (iCloud/FRP) | Toggle manual dari penjual + label "klaim"; tampilkan sebagai ide integrasi |
 | Diagnostik otomatis (baterai, SSD) | Input manual atau foto layar pengaturan |
-| Inspeksi pihak ketiga | Diwakili peran "Mitra" yang menekan tombol Verifikasi |
-| KYC, chat, rating, sengketa | Tidak dibuat; masuk slide roadmap |
+| Verifikasi mitra | Akun `mitra` memverifikasi catatan yang diajukan pengguna hingga L3; tidak ada peran inspektur |
+| KYC, chat, pemesanan pemeriksaan, rating, sengketa | Tidak dibuat; di luar MVP |
 | Data harga pasar | Sampel manual 15-20 model, bukan data real-time dan bukan hasil scraping |
 
 ### Opsional (kalau waktu sisa, nilai plus untuk juri)
@@ -83,13 +83,14 @@
 | FR-07 | Pemilik dapat mempublikasikan paspor sebagai listing dengan harga | Must |
 | FR-08 | Pembeli melihat daftar listing (filter jenis, rentang harga, skor minimum) | Must |
 | FR-09 | Halaman detail menampilkan paspor: spesifikasi, timeline riwayat, badge level per catatan, Trust Score | Must |
-| FR-10 | Pembeli menekan "Beli": status listing menjadi terjual dan kepemilikan paspor pindah | Must |
+| FR-10 | Pembeli menekan "Beli": transaksi simulasi langsung berstatus selesai, listing menjadi terjual, dan kepemilikan paspor pindah sekali secara atomik | Must |
 | FR-11 | Setiap paspor punya QR code yang membuka halaman detailnya | Should |
 | FR-12 | Unggah nota, AI mengekstrak data otomatis (OCR) | Could |
 | FR-13 | Peringatan anomali pada paspor (tanggal janggal, servis berulang) | Could |
 | FR-14 | Sistem menghitung estimasi harga wajar (rentang) dari harga dasar pasar (tabel sampel) × faktor kondisi × premi Trust Score | Should |
 | FR-15 | AI menjelaskan estimasi (2-3 alasan singkat, format JSON); pagar pengaman membatasi hasil AI maksimal ±15% dari hasil rumus, dan jika AI gagal sistem memakai hasil rumus | Should |
 | FR-16 | Listing menampilkan label **Murah / Wajar / Mahal** dan "nilai tambah paspor" (selisih harga akibat premi Trust Score) | Should |
+| FR-17 | Pengguna dapat membandingkan maksimal tiga perangkat | Should |
 
 ---
 
@@ -210,7 +211,7 @@ Usia di antara titik data dihitung dengan interpolasi sederhana.
 | Frontend | Next.js (React) + Tailwind, responsif untuk ponsel |
 | Backend + DB + Auth + Storage | Supabase (Postgres, Auth, Storage, Row Level Security) |
 | QR code | Library `qrcode` |
-| Estimasi harga + penjelasan AI | Rumus di server (API route Next.js) + panggilan API model AI dengan output JSON; kunci API disimpan di environment variable server |
+| Estimasi harga + penjelasan AI | Rumus deterministik pada RPC Supabase + TanStack Start Server Function ke Lovable AI gateway dengan output JSON; `LOVABLE_API_KEY` hanya di environment server |
 | OCR/anomali (opsional) | Panggilan API ke model AI dengan input foto nota |
 | Deploy | Vercel |
 
@@ -250,7 +251,7 @@ Usia di antara titik data dihitung dengan interpolasi sederhana.
 2. **Penjual (60 dtk):** Buat paspor, tambah catatan ganti baterai dengan foto nota, lalu Mitra memverifikasinya. Trust Score naik secara langsung, dan harga disarankan ikut naik lengkap dengan alasan dari AI.
 3. **Pembeli (60 dtk):** Pindai QR atau buka listing, lihat timeline riwayat dan badge level. Bandingkan unit ber-skor tinggi dan rendah; label Murah/Wajar/Mahal langsung menunjukkan apakah harga minta masuk akal.
 4. **Transaksi (30 dtk):** Tekan "Beli", paspor pindah kepemilikan.
-5. **Penutup (30 dtk):** Roadmap singkat: integrasi service center, diagnostik otomatis, cek IMEI, escrow, kategori lain.
+5. **Penutup (30 dtk):** Roadmap singkat: integrasi service center, diagnostik otomatis, cek IMEI, pembayaran terkelola, kategori lain.
 
 **Siapkan data dummy:** satu unit "bersih dan terverifikasi" (skor tinggi), satu unit "banyak klaim tanpa bukti" (skor rendah), dan satu unit dengan anomali (jika fitur opsional dibuat).
 
@@ -262,7 +263,7 @@ Dokumen ini jujur soal apa yang **tidak** dilakukan MVP. Batasan ini juga bahan 
 
 ### 11.1 Batasan Fungsional
 
-- Tidak memproses pembayaran atau menahan dana; tombol "Beli" hanya mengubah status listing dan kepemilikan paspor.
+- Tidak memproses pembayaran, menahan/melepas dana, refund, atau mengelola masa tinjau; tombol "Beli" langsung menyelesaikan transaksi simulasi, menandai listing terjual, dan memindahkan kepemilikan paspor.
 - Tidak mengecek IMEI maupun status iCloud/FRP/MDM ke sumber resmi; status kunci adalah pernyataan penjual.
 - Tidak membaca data diagnostik dari perangkat; persentase baterai dan kondisi fisik diinput manual.
 - Tidak ada chat, rating, sengketa, KYC, pengiriman, maupun garansi.

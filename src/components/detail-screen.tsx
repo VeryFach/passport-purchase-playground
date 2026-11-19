@@ -12,7 +12,6 @@ import {
   History,
   LockKeyhole,
   MapPin,
-  MessageSquare,
   Plus,
   QrCode,
   ShieldCheck,
@@ -137,6 +136,17 @@ export function PriceSuggestion({ device }: { device: Device }) {
               <span>Nilai tambah paspor +{rupiah(e.added)}</span>
             </li>
           </ul>
+          {device.estimateExplanation && (
+            <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+              <p>{device.estimateExplanation.summary}</p>
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                {device.estimateExplanation.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+              </ul>
+              {device.estimateExplanation.source === "deterministic_template" && (
+                <p className="mt-2 text-[10px]">Penjelasan otomatis berbasis rumus; AI tidak tersedia.</p>
+              )}
+            </div>
+          )}
 
           <p className="mt-3 border-t border-border/60 pt-2.5 text-[11px] text-muted-foreground">
             *Estimasi indikatif dari data contoh, bukan harga pasar real-time.
@@ -150,7 +160,7 @@ export function PriceSuggestion({ device }: { device: Device }) {
 }
 
 export function DetailScreen({ id }: { id: string }) {
-  const { devices, user, createOrder, orders, withdrawListing } = useDemo();
+  const { devices, user, createOrder, withdrawListing } = useDemo();
   const navigate = useNavigate();
   const localDevice = devices.find((x) => x.id === id || x.passportCode === id);
   const [publicDevice, setPublicDevice] = useState<Device | null>(null);
@@ -199,9 +209,6 @@ export function DetailScreen({ id }: { id: string }) {
   const deviceAnomalies = anomalies(d);
   const partReplacements = d.records.filter((r) => r.type === "ganti_part");
   const hasNonOriginalPart = partReplacements.some((r) => !r.original);
-  const hasOngoingOrder = orders.some(
-    (o) => o.deviceId === d.id && !["selesai", "dikembalikan"].includes(o.status),
-  );
 
   const conditionLabel =
     d.condition === "mulus" ? "Mulus" : d.condition === "lecet" ? "Lecet ringan" : "Retak / penyok";
@@ -414,12 +421,11 @@ export function DetailScreen({ id }: { id: string }) {
               d={d}
               id={d.id}
               owner={owner}
-              hasOngoingOrder={hasOngoingOrder}
               requestBuy={requestBuy}
               onWithdraw={handleWithdraw}
             />
             <p className="mt-2.5 text-center text-[11px] text-muted-foreground">
-              Simulasi escrow · Tidak ada pembayaran sungguhan
+              Pembelian simulasi · Tidak ada pembayaran sungguhan
             </p>
           </div>
 
@@ -474,7 +480,7 @@ export function DetailScreen({ id }: { id: string }) {
                 </div>
 
                 <p className="text-[11px] text-muted-foreground">
-                  *Hasil inspeksi di aplikasi ini bersifat simulasi demo.
+                  *Verifikasi mitra dalam demo tidak menjamin seluruh kondisi perangkat.
                 </p>
               </div>
             </CollapsibleSection>
@@ -557,7 +563,6 @@ export function DetailScreen({ id }: { id: string }) {
             d={d}
             id={d.id}
             owner={owner}
-            hasOngoingOrder={hasOngoingOrder}
             requestBuy={requestBuy}
             onWithdraw={handleWithdraw}
             compact
@@ -574,7 +579,7 @@ export function DetailScreen({ id }: { id: string }) {
             konfirmasi. Tidak ada dana nyata yang dipindahkan.
           </DialogDescription>
           <div className="my-2 rounded-xl bg-muted/50 p-3.5 text-center">
-            <p className="text-xs text-muted-foreground">Total pembayaran demo</p>
+            <p className="text-xs text-muted-foreground">Harga pembelian simulasi</p>
             <p className="mt-0.5 text-2xl font-bold">{rupiah(d.price || 0)}</p>
           </div>
           <Button className="h-11 w-full" onClick={confirmBuy} disabled={busy}>
@@ -655,7 +660,6 @@ function ActionButtons({
   d,
   id,
   owner,
-  hasOngoingOrder,
   requestBuy,
   onWithdraw,
   compact = false,
@@ -663,7 +667,6 @@ function ActionButtons({
   d: Device;
   id: string;
   owner: boolean;
-  hasOngoingOrder: boolean;
   requestBuy: () => void;
   onWithdraw: () => void;
   compact?: boolean;
@@ -712,25 +715,14 @@ function ActionButtons({
   }
 
   return (
-    <div className={compact ? "flex items-center gap-2.5" : "space-y-2.5"}>
+    <div className="w-full">
       <Button
-        asChild
-        variant="outline"
-        className={compact ? "h-11 px-3.5" : "h-11 w-full"}
-        aria-label="Tanya penjual"
-      >
-        <Link to="/chat/$id" params={{ id }}>
-          <MessageSquare className="size-4" />
-          <span>{compact ? "Tanya" : "Tanya penjual / tawar"}</span>
-        </Link>
-      </Button>
-      <Button
-        className={compact ? "h-11 flex-1" : "h-11 w-full"}
+        className="h-11 w-full"
         onClick={requestBuy}
-        disabled={d.status !== "aktif" || !canList(d) || hasOngoingOrder}
+        disabled={d.status !== "aktif" || !canList(d)}
       >
-        <span>{hasOngoingOrder ? "Dalam pesanan" : "Beli sekarang"}</span>
-        {!hasOngoingOrder && <ArrowRight className="size-4" />}
+        <span>Beli sekarang</span>
+        <ArrowRight className="size-4" />
       </Button>
     </div>
   );

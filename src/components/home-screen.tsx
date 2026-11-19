@@ -121,8 +121,7 @@ export function HomeScreen() {
         <select value={source} onChange={(event) => setSource(event.target.value)}>
           <option value="all">Semua sumber</option>
           <option value="2">Ada dokumen</option>
-          <option value="3">Ada diagnostik</option>
-          <option value="4">Ada inspeksi</option>
+          <option value="3">Diverifikasi mitra</option>
         </select>
       </label>
       <Button variant="outline" className="w-full" onClick={reset}>

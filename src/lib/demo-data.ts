@@ -7,7 +7,7 @@ export { iphone, macbook, galaxy, receipt };
 const record = (
   id: string,
   type: HistoryRecord["type"],
-  level: 1 | 2 | 3 | 4,
+  level: 1 | 2 | 3,
   description: string,
 ): HistoryRecord => ({
   id,
@@ -22,7 +22,7 @@ const record = (
 const trusted = [
   record("r1", "pembelian", 2, "Pembelian resmi, nota dan kotak perangkat tersedia."),
   record("r2", "baterai", 3, "Baterai 91%, hasil pemeriksaan terlampir."),
-  record("r3", "servis", 4, "Pemeriksaan layar dan fungsi perangkat, seluruh fungsi normal."),
+  record("r3", "servis", 3, "Pemeriksaan layar dan fungsi perangkat, seluruh fungsi normal."),
   record("r4", "ganti_part", 2, "Penggantian baterai original di mitra servis."),
 ];
 const common = {

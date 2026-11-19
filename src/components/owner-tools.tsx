@@ -1,17 +1,7 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { CalendarDays, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useDemo } from "./demo-provider";
-import { dateLabel, type Device } from "@/lib/passport";
+import type { Device } from "@/lib/passport";
 export function OwnerTools({ device }: { device: Device }) {
-  const { updateDevice, bookInspection, inspections } = useDemo();
-  const [open, setOpen] = useState(false),
-    [date, setDate] = useState("2026-11-20"),
-    [location, setLocation] = useState("Mitra Servis Jakarta");
-  const scheduled = inspections.find((i) => i.deviceId === device.id);
+  const { updateDevice } = useDemo();
   return (
     <section className="mt-8 border-t border-border py-7">
       <h2 className="mb-5 text-lg font-semibold">Rawat sekarang, jual dengan yakin nanti</h2>
@@ -70,56 +60,6 @@ export function OwnerTools({ device }: { device: Device }) {
           </select>
         </label>
       </div>
-      {scheduled ? (
-        <p className="mt-5 flex items-start gap-3 rounded-lg bg-trust-soft p-4 text-sm">
-          <CalendarDays className="size-5 shrink-0" />
-          Inspeksi {dateLabel(scheduled.date)} · {scheduled.location} ·{" "}
-          {scheduled.status === "menunggu" ? "Menunggu" : "Selesai"}
-        </p>
-      ) : (
-        <Button variant="outline" className="mt-5 h-12 w-full" onClick={() => setOpen(true)}>
-          <ShieldCheck />
-          Jadwalkan inspeksi demo
-        </Button>
-      )}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogTitle>Jadwalkan inspeksi</DialogTitle>
-          <DialogDescription>
-            Pemesanan demo, bukan janji temu dengan mitra sungguhan.
-          </DialogDescription>
-          <form
-            className="space-y-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              bookInspection(device.id, location, date);
-              setOpen(false);
-              toast.success("Inspeksi demo dijadwalkan");
-            }}
-          >
-            <label className="field">
-              Lokasi inspeksi
-              <select value={location} onChange={(e) => setLocation(e.target.value)}>
-                <option>Mitra Servis Jakarta</option>
-                <option>Pemeriksaan jarak jauh</option>
-              </select>
-            </label>
-            <label className="field">
-              Tanggal
-              <input
-                type="date"
-                min="2026-11-18"
-                value={date}
-                required
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-            <Button type="submit" className="h-12 w-full">
-              Konfirmasi jadwal
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }

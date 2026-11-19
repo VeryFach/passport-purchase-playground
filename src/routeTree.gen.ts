@@ -11,13 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRouteImport } from './routes/account'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as DevicesRouteImport } from './routes/devices'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MitraRouteImport } from './routes/mitra'
 import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as DevicesIndexRouteImport } from './routes/devices.index'
 import { Route as DevicesIdRouteImport } from './routes/devices.$id'
 import { Route as DevicesNewRouteImport } from './routes/devices.new'
@@ -34,11 +32,6 @@ const IndexRoute = IndexRouteImport.update({
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareRoute = CompareRouteImport.update({
@@ -64,11 +57,6 @@ const MitraRoute = MitraRouteImport.update({
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatIdRoute = ChatIdRouteImport.update({
-  id: '/chat/$id',
-  path: '/chat/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevicesIndexRoute = DevicesIndexRouteImport.update({
@@ -110,13 +98,11 @@ const DevicesIdListingRoute = DevicesIdListingRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
-  '/admin': typeof AdminRoute
   '/compare': typeof CompareRoute
   '/devices': typeof DevicesRouteWithChildren
   '/login': typeof LoginRoute
   '/mitra': typeof MitraRoute
   '/orders': typeof OrdersRouteWithChildren
-  '/chat/$id': typeof ChatIdRoute
   '/devices/$id': typeof DevicesIdRoute
   '/devices/new': typeof DevicesNewRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -128,11 +114,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
-  '/admin': typeof AdminRoute
   '/compare': typeof CompareRoute
   '/login': typeof LoginRoute
   '/mitra': typeof MitraRoute
-  '/chat/$id': typeof ChatIdRoute
   '/devices/$id': typeof DevicesIdRoute
   '/devices/new': typeof DevicesNewRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -145,13 +129,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
-  '/admin': typeof AdminRoute
   '/compare': typeof CompareRoute
   '/devices': typeof DevicesRouteWithChildren
   '/login': typeof LoginRoute
   '/mitra': typeof MitraRoute
   '/orders': typeof OrdersRouteWithChildren
-  '/chat/$id': typeof ChatIdRoute
   '/devices/$id': typeof DevicesIdRoute
   '/devices/new': typeof DevicesNewRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -165,13 +147,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
-    | '/admin'
     | '/compare'
     | '/devices'
     | '/login'
     | '/mitra'
     | '/orders'
-    | '/chat/$id'
     | '/devices/$id'
     | '/devices/new'
     | '/orders/$id'
@@ -183,11 +163,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
-    | '/admin'
     | '/compare'
     | '/login'
     | '/mitra'
-    | '/chat/$id'
     | '/devices/$id'
     | '/devices/new'
     | '/orders/$id'
@@ -199,13 +177,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
-    | '/admin'
     | '/compare'
     | '/devices'
     | '/login'
     | '/mitra'
     | '/orders'
-    | '/chat/$id'
     | '/devices/$id'
     | '/devices/new'
     | '/orders/$id'
@@ -218,13 +194,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
-  AdminRoute: typeof AdminRoute
   CompareRoute: typeof CompareRoute
   DevicesRoute: typeof DevicesRouteWithChildren
   LoginRoute: typeof LoginRoute
   MitraRoute: typeof MitraRoute
   OrdersRoute: typeof OrdersRouteWithChildren
-  ChatIdRoute: typeof ChatIdRoute
   PIdRoute: typeof PIdRoute
 }
 
@@ -242,13 +216,6 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare': {
@@ -284,13 +251,6 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/orders'
       preLoaderRoute: typeof OrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chat/$id': {
-      id: '/chat/$id'
-      path: '/chat/$id'
-      fullPath: '/chat/$id'
-      preLoaderRoute: typeof ChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devices/': {
@@ -378,13 +338,11 @@ const OrdersRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
-  AdminRoute: AdminRoute,
   CompareRoute: CompareRoute,
   DevicesRoute: DevicesRouteWithChildren,
   LoginRoute: LoginRoute,
   MitraRoute: MitraRoute,
   OrdersRoute: OrdersRouteWithChildren,
-  ChatIdRoute: ChatIdRoute,
   PIdRoute: PIdRoute,
 }
 export const routeTree = rootRouteImport

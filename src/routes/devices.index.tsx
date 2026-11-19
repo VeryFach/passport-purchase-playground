@@ -88,11 +88,9 @@ function Devices() {
                       variant="destructive"
                       className="mt-3 h-11 w-full"
                       onClick={async () => {
-                        try {
-                          await withdrawListing(d.listingId!);
+                        const withdrawn = await withdrawListing(d.listingId!);
+                        if (withdrawn) {
                           toast.success("Listing berhasil ditarik.");
-                        } catch {
-                          toast.error("Gagal menarik listing. Coba lagi.");
                         }
                       }}
                     >
