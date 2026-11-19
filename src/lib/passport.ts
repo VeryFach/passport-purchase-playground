@@ -38,6 +38,7 @@ export type Device = {
   serviceDue?: string;
   warrantyUntil?: string;
   ownership?: { date: string; from: string; to: string }[];
+  currentOwnerName?: string;
   /** Permanent public passport code from the database. */
   passportCode?: string;
   /** Active listing id, used for purchase RPC calls. */

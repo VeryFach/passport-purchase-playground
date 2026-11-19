@@ -11,6 +11,7 @@ import type {
   MarketPriceRow,
   MarketplaceFeedRow,
   PendingVerificationRow,
+  PublicOwnershipEvent,
   ProfileRow,
   TransactionRow,
 } from "./database.types";
@@ -206,16 +207,29 @@ function publicHistoryToRecord(row: {
   };
 }
 
-function ownershipFromHistories(rows: HistoryRecordRow[], signedUrls: Record<string, string>) {
+function ownershipFromHistories(
+  rows: { type: string; event_date?: string; created_at?: string }[],
+) {
   return rows
-    .filter((row) => row.type === "transfer")
-    .map((row) => ({
+    .filter(
+      (row): row is { type: "transfer"; event_date: string; created_at?: string } =>
+        row.type === "transfer" && Boolean(row.event_date),
+    )
+    .sort(
+      (a, b) =>
+        a.event_date.localeCompare(b.event_date) ||
+        (a.created_at ?? "").localeCompare(b.created_at ?? ""),
+    )
+    .map((row, index) => ({
       date: row.event_date,
-      from: "Pemilik sebelumnya",
-      to: "Pemilik saat ini",
-      description: row.description,
-      evidence: row.evidence_url ? (signedUrls[row.evidence_url] ?? null) : null,
+      from: `Pemilik #${index + 1}`,
+      to: `Pemilik #${index + 2}`,
     }));
+}
+
+function currentOwnerNameFromHistories(rows: { type: string; owner_name?: unknown }[]) {
+  const owner = rows.find((row) => row.type === "owner_fallback")?.owner_name;
+  return typeof owner === "string" && owner.trim() ? owner.trim() : undefined;
 }
 
 function deviceFromOwnedRow(
@@ -268,7 +282,7 @@ function deviceFromOwnedRow(
     accessories: str(specs["accessories"], ""),
     serviceDue: str(specs["serviceDue"], ""),
     warrantyUntil: str(specs["warrantyUntil"], ""),
-    ownership: ownershipFromHistories(histories, signedUrls),
+    ownership: ownershipFromHistories(histories),
     passportCode: row.passport_code,
     listingId: listing?.status === "active" ? listing.id : undefined,
     trustScore: row.trust_score > 0 ? row.trust_score : undefined,
@@ -310,6 +324,8 @@ function deviceFromFeedRow(row: MarketplaceFeedRow, markets: MarketPriceRow[]): 
     owner: "",
     location: "Lokasi tidak dibagikan",
     records,
+    ownership: ownershipFromHistories(row.histories ?? []),
+    currentOwnerName: currentOwnerNameFromHistories(row.histories ?? []),
     price: num(row.price),
     basePrice,
     status: "aktif",
@@ -504,8 +520,18 @@ export async function fetchWorkspace(userId: string): Promise<WorkspaceData> {
 
 export async function fetchPublicDevice(key: string): Promise<Device | null> {
   const supabase = createClient();
-  const { data, error } = await supabase.rpc("public_passport", { p_key: key });
+  const [passportResult, ownershipResult] = await Promise.all([
+    supabase.rpc("public_passport", { p_key: key }),
+    supabase.rpc("public_ownership_history", { p_key: key }),
+  ]);
+  const { data, error } = passportResult;
   if (error || !data?.length) return null;
+  if (ownershipResult.error) {
+    console.warn(
+      "[paspor] public ownership history unavailable",
+      ownershipResult.error.message,
+    );
+  }
   const row = data[0] as {
     device_id: string;
     passport_code: string;
@@ -528,6 +554,10 @@ export async function fetchPublicDevice(key: string): Promise<Device | null> {
       level: number | null;
     }[];
   };
+  const ownershipEvents =
+    !ownershipResult.error && ownershipResult.data?.[0]?.histories
+      ? (ownershipResult.data[0].histories as PublicOwnershipEvent[])
+      : row.histories ?? [];
   const records = (row.histories ?? [])
     .map((history) => publicHistoryToRecord(history))
     .filter((record): record is HistoryRecord => Boolean(record));
@@ -547,6 +577,8 @@ export async function fetchPublicDevice(key: string): Promise<Device | null> {
     owner: "",
     location: "Lokasi tidak dibagikan",
     records,
+    ownership: ownershipFromHistories(ownershipEvents),
+    currentOwnerName: currentOwnerNameFromHistories(ownershipEvents),
     price: null,
     basePrice: null,
     status: "draf",

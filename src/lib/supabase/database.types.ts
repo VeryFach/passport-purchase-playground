@@ -168,6 +168,15 @@ export interface PublicHistoryRow {
   source: string;
 }
 
+export interface PublicOwnershipEvent {
+  type: HistoryType | "owner_fallback";
+  title?: string;
+  description?: string;
+  event_date?: string;
+  level?: number | null;
+  owner_name?: string;
+}
+
 export interface MarketplaceFeedRow {
   listing_id: string;
   device_id: string;
@@ -224,6 +233,10 @@ export interface Database {
       public_passport: {
         Args: { p_key: string };
         Returns: PublicPassportRow[];
+      };
+      public_ownership_history: {
+        Args: { p_key: string };
+        Returns: { histories: PublicOwnershipEvent[] }[];
       };
       pending_verifications: {
         Args: Record<string, never>;

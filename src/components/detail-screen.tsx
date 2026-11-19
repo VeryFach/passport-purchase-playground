@@ -1,29 +1,5 @@
-import { useEffect, useState } from "react";
-import { fetchPublicDevice } from "@/lib/supabase/passport-data";
-import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  AlertTriangle,
-  ArrowRight,
-  BatteryCharging,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  FileText,
-  History,
-  LockKeyhole,
-  MapPin,
-  Plus,
-  QrCode,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
-import QRCode from "qrcode";
-import { anomalies, canList } from "@/lib/workflows";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useDemo } from "./demo-provider";
-import { ScoreRing, LevelChip, PriceBadge, PageHeading, EmptyState } from "./passport-ui";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   dateLabel,
   estimate,
@@ -36,6 +12,32 @@ import {
   trustScore,
   type Device,
 } from "@/lib/passport";
+import { fetchPublicDevice } from "@/lib/supabase/passport-data";
+import { anomalies } from "@/lib/workflows";
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BatteryCharging,
+  Calendar,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  FileText,
+  History,
+  LockKeyhole,
+  MapPin,
+  Plus,
+  QrCode,
+  ShieldCheck,
+  Sparkles,
+  UserCheck,
+} from "lucide-react";
+import QRCode from "qrcode";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useDemo } from "./demo-provider";
+import { EmptyState, LevelChip, PageHeading, PriceBadge, ScoreRing } from "./passport-ui";
 
 /** Reusable Mobile-First Collapsible Card */
 function CollapsibleSection({
@@ -164,15 +166,26 @@ export function DetailScreen({ id }: { id: string }) {
   const navigate = useNavigate();
   const localDevice = devices.find((x) => x.id === id || x.passportCode === id);
   const [publicDevice, setPublicDevice] = useState<Device | null>(null);
-  const d = localDevice ?? publicDevice;
+  const publicDeviceMatches =
+    publicDevice?.id === id || publicDevice?.passportCode === id ? publicDevice : null;
+  const d = localDevice
+    ? {
+        ...localDevice,
+        ownership: publicDeviceMatches
+          ? publicDeviceMatches.ownership
+          : localDevice.ownership,
+        currentOwnerName:
+          publicDeviceMatches?.currentOwnerName ?? localDevice.currentOwnerName,
+      }
+    : publicDeviceMatches;
   const [buy, setBuy] = useState(false),
     [qrOpen, setQrOpen] = useState(false),
     [qr, setQr] = useState(""),
     [evidence, setEvidence] = useState<string | null>(null),
     [busy, setBusy] = useState(false);
   useEffect(() => {
-    if (localDevice) return;
     let active = true;
+    setPublicDevice(null);
     fetchPublicDevice(id)
       .then((device) => {
         if (active) setPublicDevice(device);
@@ -183,7 +196,7 @@ export function DetailScreen({ id }: { id: string }) {
     return () => {
       active = false;
     };
-  }, [id, localDevice]);
+  }, [id]);
   useEffect(() => {
     if (!qrOpen) return;
     const code = d?.passportCode ?? id;
@@ -375,36 +388,109 @@ export function DetailScreen({ id }: { id: string }) {
 
             {/* 2. Rantai Kepemilikan */}
             <CollapsibleSection
-              title="Rantai kepemilikan"
-              summary={
-                d.ownership?.length
-                  ? `${d.ownership.length} perpindahan tangan tercatat`
-                  : "Belum ada catatan perpindahan"
-              }
-            >
-              <p className="mb-3 text-xs text-muted-foreground">
-                Identitas pemilik disamarkan; riwayat teknis tetap melekat pada perangkat.
-              </p>
-              {d.ownership?.length ? (
-                <ul className="space-y-2.5 text-sm">
-                  {d.ownership.map((o, i) => (
-                    <li
-                      key={i}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs"
-                    >
-                      <span className="font-medium">
-                        {o.from} → {o.to}
-                      </span>
-                      <span className="text-muted-foreground">{dateLabel(o.date)}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Riwayat kepemilikan sebelumnya tidak tersedia.
-                </p>
-              )}
-            </CollapsibleSection>
+  title="Rantai kepemilikan"
+  summary={
+    d.ownership?.length
+      ? `${d.ownership.length} riwayat perpindahan${
+          d.currentOwnerName ? ` · Pemilik: ${d.currentOwnerName}` : ""
+        }`
+      : d.currentOwnerName
+        ? `Pemilik saat ini: ${d.currentOwnerName}`
+        : "Belum ada catatan kepemilikan"
+  }
+>
+  <div className="space-y-4">
+    {/* Highlight Pemilik Saat Ini */}
+    {d.currentOwnerName && (
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-3.5 py-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <UserCheck className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              Pemilik saat ini
+            </p>
+            <p className="truncate text-sm font-semibold text-foreground">
+              {d.currentOwnerName}
+            </p>
+          </div>
+        </div>
+
+        <span className="shrink-0 rounded-full border border-border/60 bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+          {d.ownership?.length ? "Pemilik aktif" : "Tangan pertama"}
+        </span>
+      </div>
+    )}
+
+    {/* Timeline Perpindahan atau Empty State */}
+    {d.ownership?.length ? (
+      <div className="space-y-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          Riwayat perpindahan ({d.ownership.length})
+        </p>
+
+        <div className="relative pl-5">
+          {/* Garis penghubung vertikal */}
+          <div
+            aria-hidden="true"
+            className="absolute bottom-3.5 left-[7px] top-3.5 w-px bg-border"
+          />
+
+          <ul className="space-y-2.5">
+            {d.ownership.map((o, i) => (
+              <li
+                key={i}
+                className="relative flex flex-col justify-between gap-1.5 rounded-xl border border-border/50 bg-muted/25 px-3.5 py-2.5 transition-colors hover:bg-muted/45 sm:flex-row sm:items-center sm:gap-3"
+              >
+                {/* Titik node timeline */}
+                <span
+                  aria-hidden="true"
+                  className="absolute -left-5 top-3.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-primary bg-background"
+                />
+
+                {/* Alur pemilik */}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="text-muted-foreground">{o.from}</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+                  <span className="font-semibold text-foreground">{o.to}</span>
+                </div>
+
+                {/* Tanggal perpindahan */}
+                <div className="flex items-center gap-1.5 text-[11px] tabular-nums text-muted-foreground sm:shrink-0">
+                  <Calendar className="h-3 w-3 shrink-0 opacity-70" />
+                  <span>{dateLabel(o.date)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    ) : (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-5 text-center">
+        <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <History className="h-4 w-4" />
+        </div>
+        <p className="text-xs font-medium text-foreground">
+          Belum ada riwayat perpindahan tangan
+        </p>
+        <p className="mt-0.5 max-w-xs text-[11px] leading-relaxed text-muted-foreground">
+          {d.currentOwnerName
+            ? "Perangkat ini masih tercatat pada pemilik awal dan belum pernah dipindahtangankan."
+            : "Perpindahan kepemilikan berikutnya akan tercatat secara otomatis di paspor ini."}
+        </p>
+      </div>
+    )}
+
+    {/* Catatan jaminan integritas data */}
+    <div className="flex items-start gap-2 rounded-lg bg-muted/30 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+      <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/80" />
+      <span>
+        Riwayat teknis dan servis tetap melekat pada perangkat meski kepemilikan berpindah.
+      </span>
+    </div>
+  </div>
+</CollapsibleSection>
           </div>
         </div>
 
